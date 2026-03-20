@@ -3,39 +3,69 @@ import { FuelCategory, SiteType, type FuelDataSource, type NormalizedStation } f
 import { fetchWithEnvProxy } from "@/lib/fetch-with-env-proxy";
 
 type FranceRecord = {
-  id?: string;
+  id?: string | number;
   adresse?: string;
   ville?: string;
   code_postal?: string;
+  cp?: string;
   geom?: { lat?: number; lon?: number };
   latitude?: number | string;
   longitude?: number | string;
   horaires_automate_24_24?: string;
   services_service?: string[];
-  prix?: Array<{
-    "@nom"?: string;
-    "@valeur"?: string | number;
-    "@maj"?: string;
-  }>;
+  prix?:
+    | string
+    | Array<{
+        "@nom"?: string;
+        "@valeur"?: string | number;
+        "@maj"?: string;
+      }>;
   prices?: Array<{
     name?: string;
     value?: string | number;
     updated_at?: string;
   }>;
+  gazole_prix?: number | string | null;
+  gazole_maj?: string | null;
+  sp95_prix?: number | string | null;
+  sp95_maj?: string | null;
+  e85_prix?: number | string | null;
+  e85_maj?: string | null;
+  gplc_prix?: number | string | null;
+  gplc_maj?: string | null;
+  e10_prix?: number | string | null;
+  e10_maj?: string | null;
+  sp98_prix?: number | string | null;
+  sp98_maj?: string | null;
   pop?: string;
 };
 
-type FrancePriceEntry =
+type FranceRawPrice =
   | {
-      "@nom"?: string;
-      "@valeur"?: string | number;
-      "@maj"?: string;
-    }
+    "@nom"?: string;
+    "@valeur"?: string | number;
+    "@maj"?: string;
+  }
   | {
-      name?: string;
-      value?: string | number;
-      updated_at?: string;
-    };
+    name?: string;
+    value?: string | number;
+    updated_at?: string;
+  };
+
+type FrancePriceEntry = {
+  name?: string;
+  value?: string | number;
+  updatedAt?: string;
+};
+
+const FRANCE_COLUMN_PRICE_FIELDS = [
+  { name: "Gazole", priceKey: "gazole_prix", updatedAtKey: "gazole_maj" },
+  { name: "SP95", priceKey: "sp95_prix", updatedAtKey: "sp95_maj" },
+  { name: "E85", priceKey: "e85_prix", updatedAtKey: "e85_maj" },
+  { name: "GPLc", priceKey: "gplc_prix", updatedAtKey: "gplc_maj" },
+  { name: "E10", priceKey: "e10_prix", updatedAtKey: "e10_maj" },
+  { name: "SP98", priceKey: "sp98_prix", updatedAtKey: "sp98_maj" }
+] as const;
 
 function categoryFromFrenchName(name: string): FuelCategory {
   const normalized = name.toLowerCase();
@@ -48,7 +78,7 @@ function categoryFromFrenchName(name: string): FuelCategory {
   return FuelCategory.PETROL;
 }
 
-function normalizePriceEntry(entry: FrancePriceEntry) {
+function normalizePriceEntry(entry: FranceRawPrice): FrancePriceEntry {
   if ("@nom" in entry || "@valeur" in entry || "@maj" in entry) {
     return {
       name: entry["@nom"],
@@ -63,6 +93,40 @@ function normalizePriceEntry(entry: FrancePriceEntry) {
     value: other.value,
     updatedAt: other.updated_at
   };
+}
+
+function parsePriceArray(value: FranceRecord["prix"] | FranceRecord["prices"]) {
+  if (Array.isArray(value)) {
+    return value as FranceRawPrice[];
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? (parsed as FranceRawPrice[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function getColumnPrices(record: FranceRecord): FrancePriceEntry[] {
+  return FRANCE_COLUMN_PRICE_FIELDS.flatMap(({ name, priceKey, updatedAtKey }) => {
+    const value = record[priceKey];
+    if (value == null) {
+      return [];
+    }
+
+    return [
+      {
+        name,
+        value,
+        updatedAt: record[updatedAtKey] ?? undefined
+      }
+    ];
+  });
 }
 
 export class FranceFuelProvider implements FuelDataSource {
@@ -87,12 +151,13 @@ export class FranceFuelProvider implements FuelDataSource {
         .map<NormalizedStation | null>((record) => {
           const latitude = Number(record.geom?.lat ?? record.latitude);
           const longitude = Number(record.geom?.lon ?? record.longitude);
-          const rawPriceSource = record.prix ?? record.prices ?? [];
-          const rawPrices = Array.isArray(rawPriceSource) ? (rawPriceSource as FrancePriceEntry[]) : [];
+          const rawPrices = parsePriceArray(record.prix ?? record.prices);
+          const normalizedPriceEntries =
+            rawPrices.length > 0 ? rawPrices.map((entry) => normalizePriceEntry(entry)) : getColumnPrices(record);
 
-          const products = rawPrices
+          const products = normalizedPriceEntries
             .map((entry) => {
-              const { name, value, updatedAt } = normalizePriceEntry(entry);
+              const { name, value, updatedAt } = entry;
               if (!name || value == null) {
                 return null;
               }
@@ -115,13 +180,13 @@ export class FranceFuelProvider implements FuelDataSource {
 
           return {
             sourceKey: this.key,
-            externalId: record.id ?? crypto.randomUUID(),
+            externalId: record.id != null ? String(record.id) : crypto.randomUUID(),
             name: record.pop ? `Station ${record.pop}` : `Station ${record.ville ?? "France"}`,
             type: SiteType.STATION,
             countryCode: "FR",
             addressLine1: record.adresse,
             city: record.ville,
-            postcode: record.code_postal,
+            postcode: record.code_postal ?? record.cp,
             latitude,
             longitude,
             metadata: {
