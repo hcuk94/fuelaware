@@ -10,7 +10,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run db:generate
-RUN NEXTAUTH_SECRET=build-time-placeholder DATABASE_URL=file:./dev.db npm run build
+RUN NEXTAUTH_SECRET=build-time-placeholder DATABASE_URL=file:./prisma/dev.db npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production

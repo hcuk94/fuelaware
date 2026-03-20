@@ -1,8 +1,8 @@
 import Decimal from "decimal.js";
-import { PrismaClient } from "@prisma/client";
 import { ingestLatestSnapshots } from "../src/lib/services/ingest";
+import { createPrismaClient } from "../src/lib/prisma-client";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@example.com";
