@@ -9,9 +9,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXTAUTH_SECRET=build-time-placeholder
-ENV DATABASE_URL=file:./dev.db
-RUN npm run build
+RUN NEXTAUTH_SECRET=build-time-placeholder DATABASE_URL=file:./dev.db npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production

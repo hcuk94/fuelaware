@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import Decimal from "decimal.js";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -31,7 +31,7 @@ export async function POST(
     data: {
       favouriteId,
       fuelProductId: body.fuelProductId,
-      thresholdPrice: body.thresholdPrice ? new Prisma.Decimal(body.thresholdPrice) : null,
+      thresholdPrice: body.thresholdPrice ? new Decimal(body.thresholdPrice) : null,
       lowestLookbackDays: body.lowestLookbackDays ?? null
     }
   });

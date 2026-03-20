@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { dataSources } from "@/lib/data-sources";
 import { prisma as sharedPrisma } from "@/lib/prisma";
@@ -62,7 +63,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
             category: product.category,
             unit: product.unit,
             currency: product.currency,
-            lastPrice: new Prisma.Decimal(product.price),
+            lastPrice: new Decimal(product.price),
             lastUpdatedAt: product.observedAt,
             metadata: product.metadata as Prisma.InputJsonValue | undefined
           },
@@ -73,7 +74,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
             category: product.category,
             unit: product.unit,
             currency: product.currency,
-            lastPrice: new Prisma.Decimal(product.price),
+            lastPrice: new Decimal(product.price),
             lastUpdatedAt: product.observedAt,
             metadata: product.metadata as Prisma.InputJsonValue | undefined
           }
@@ -82,7 +83,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
         await client.priceSnapshot.create({
           data: {
             fuelProductId: storedProduct.id,
-            price: new Prisma.Decimal(product.price),
+            price: new Decimal(product.price),
             currency: product.currency,
             unit: product.unit,
             observedAt: product.observedAt

@@ -1,4 +1,5 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import Decimal from "decimal.js";
+import { PrismaClient } from "@prisma/client";
 import { ingestLatestSnapshots } from "../src/lib/services/ingest";
 
 const prisma = new PrismaClient();
@@ -69,7 +70,7 @@ async function main() {
             {
               favouriteId: favourite.id,
               fuelProductId: firstProduct.id,
-              thresholdPrice: new Prisma.Decimal("1.60")
+              thresholdPrice: new Decimal("1.60")
             },
             {
               favouriteId: favourite.id,
