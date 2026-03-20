@@ -147,7 +147,7 @@ Notes:
 
 - `UK_FUEL_API_URL` is optional. If unset, FuelAware uses `https://www.fuel-finder.service.gov.uk/api/v1/` and reads prices from its `/prices` resource.
 - The UK Government Fuel Finder API uses OAuth 2.0 client credentials. FuelAware exchanges `UK_FUEL_CLIENT_ID` and `UK_FUEL_CLIENT_SECRET` for a bearer token before calling the public API.
-- `UK_FUEL_TOKEN_URL` is optional. If unset, FuelAware defaults to `https://www.fuel-finder.service.gov.uk/oauth/token`.
+- `UK_FUEL_TOKEN_URL` is optional. If unset, FuelAware defaults to `https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token`.
 - `UK_FUEL_API_SCOPE` is optional. If unset, FuelAware uses `fuelfinder.read`.
 - FuelAware accepts both the older station-style payload (`stations`, `data`) and row-based payloads (`results`, `items`) so the UK adapter can tolerate upstream shape changes more easily.
 - If the UK fetch or token exchange fails, FuelAware falls back to bundled UK sample data.

@@ -58,6 +58,12 @@ type OAuthTokenResponse = {
   access_token?: string;
   token_type?: string;
   expires_in?: number;
+  data?: {
+    access_token?: string;
+    token_type?: string;
+    expires_in?: number;
+    refresh_token?: string;
+  };
 };
 
 let cachedToken:
@@ -125,9 +131,7 @@ function getTokenUrl() {
     return configuredTokenUrl;
   }
 
-  const apiRootUrl = getApiRootUrl();
-  const origin = new URL(apiRootUrl).origin;
-  return `${origin}/oauth/token`;
+  return "https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token";
 }
 
 function getObservedAt(record: UkApiRecord) {
@@ -268,19 +272,18 @@ async function getAccessToken() {
     return cachedToken.accessToken;
   }
 
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: clientId,
-    client_secret: clientSecret,
-    scope
-  });
-
   const response = await fetchWithEnvProxy(tokenUrl, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/json",
+      Accept: "application/json"
     },
-    body: body.toString(),
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "client_credentials",
+      scope
+    }),
     cache: "no-store",
     next: { revalidate: 0 }
   });
@@ -290,17 +293,18 @@ async function getAccessToken() {
   }
 
   const payload = (await response.json()) as OAuthTokenResponse;
-  if (!payload.access_token) {
+  const tokenPayload = payload.data ?? payload;
+  if (!tokenPayload.access_token) {
     throw new Error("UK token response did not include an access token");
   }
 
   cachedToken = {
-    accessToken: payload.access_token,
-    expiresAt: Date.now() + (payload.expires_in ?? 3600) * 1000,
+    accessToken: tokenPayload.access_token,
+    expiresAt: Date.now() + (tokenPayload.expires_in ?? 3600) * 1000,
     cacheKey
   };
 
-  return payload.access_token;
+  return tokenPayload.access_token;
 }
 
 export class UkFuelProvider implements FuelDataSource {

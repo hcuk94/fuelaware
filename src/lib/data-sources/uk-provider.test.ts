@@ -53,15 +53,17 @@ describe("UkFuelProvider", () => {
       UK_FUEL_API_URL: "https://www.fuel-finder.service.gov.uk/api/v1/",
       UK_FUEL_CLIENT_ID: "demo-client",
       UK_FUEL_CLIENT_SECRET: "demo-secret",
-      UK_FUEL_TOKEN_URL: "https://www.fuel-finder.service.gov.uk/oauth/token"
+      UK_FUEL_TOKEN_URL: "https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token"
     };
     global.fetch = vi
       .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          access_token: "access-token",
-          expires_in: 3600
+          data: {
+            access_token: "access-token",
+            expires_in: 3600
+          }
         })
       })
       .mockResolvedValueOnce({
@@ -92,12 +94,19 @@ describe("UkFuelProvider", () => {
 
     expect(global.fetch).toHaveBeenNthCalledWith(
       1,
-      "https://www.fuel-finder.service.gov.uk/oauth/token",
+      "https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token",
       expect.objectContaining({
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body:
-          "grant_type=client_credentials&client_id=demo-client&client_secret=demo-secret&scope=fuelfinder.read"
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          client_id: "demo-client",
+          client_secret: "demo-secret",
+          grant_type: "client_credentials",
+          scope: "fuelfinder.read"
+        })
       })
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
