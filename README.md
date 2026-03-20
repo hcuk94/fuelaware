@@ -127,30 +127,30 @@ docker compose up -d
 
 FuelAware ships with two country integrations:
 
-- UK via `UK_FUEL_API_URL`, `UK_FUEL_CLIENT_ID`, and `UK_FUEL_CLIENT_SECRET`
+- UK via `UK_FUEL_CLIENT_ID` and `UK_FUEL_CLIENT_SECRET`
 - France via `FRANCE_FUEL_API_URL`
 
 All provider settings are environment variables, so the setup is the same whether you run the app locally, in Docker Compose, or in another container platform.
 
 ### 1. Configure the UK provider
 
-The UK integration does not have a built-in default URL. You must point it at the UK feed you want FuelAware to read.
+The UK integration defaults to the UK Government Fuel Finder public prices endpoint, so in most cases you only need to supply your client credentials.
 
 Set:
 
 ```bash
-UK_FUEL_API_URL="https://api.fuelfinder.service.gov.uk/v1/prices"
 UK_FUEL_CLIENT_ID="your-client-id"
 UK_FUEL_CLIENT_SECRET="your-client-secret"
 ```
 
 Notes:
 
-- `UK_FUEL_API_URL` should point at the Fuel Finder public prices endpoint. If you leave it empty, FuelAware falls back to bundled UK sample data.
+- `UK_FUEL_API_URL` is optional. If unset, FuelAware uses `https://api.fuelfinder.service.gov.uk/v1/prices`.
 - The UK Government Fuel Finder API uses OAuth 2.0 client credentials. FuelAware exchanges `UK_FUEL_CLIENT_ID` and `UK_FUEL_CLIENT_SECRET` for a bearer token before calling the public API.
 - `UK_FUEL_TOKEN_URL` is optional. If unset, FuelAware defaults to `https://api.fuelfinder.service.gov.uk/oauth/token`.
 - `UK_FUEL_API_SCOPE` is optional. If unset, FuelAware uses `fuelfinder.read`.
 - FuelAware accepts both the older station-style payload (`stations`, `data`) and row-based payloads (`results`, `items`) so the UK adapter can tolerate upstream shape changes more easily.
+- If the UK fetch or token exchange fails, FuelAware falls back to bundled UK sample data.
 
 ### 2. Configure the France provider
 
@@ -174,7 +174,6 @@ Notes:
 For a deployment with both providers enabled:
 
 ```bash
-UK_FUEL_API_URL="https://api.fuelfinder.service.gov.uk/v1/prices"
 UK_FUEL_CLIENT_ID="your-client-id"
 UK_FUEL_CLIENT_SECRET="your-client-secret"
 FRANCE_FUEL_API_URL="https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100"

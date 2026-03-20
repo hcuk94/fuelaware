@@ -1,4 +1,3 @@
-import { mockStations } from "./mock-data";
 import { UkFuelProvider } from "./uk-provider";
 import { FuelCategory } from "./types";
 
@@ -12,12 +11,39 @@ describe("UkFuelProvider", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns mock stations when no API URL is configured", async () => {
+  it("defaults to the government URL when no API URL is configured", async () => {
     process.env = { ...originalEnv, UK_FUEL_API_URL: "" };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [
+          {
+            site_id: "default-url-1",
+            site_name: "Default URL Court",
+            town: "Bristol",
+            lat: 51.45,
+            lon: -2.58,
+            prices: {
+              e10: 1.49
+            }
+          }
+        ]
+      })
+    }) as typeof fetch;
     const provider = new UkFuelProvider();
 
-    await expect(provider.fetchStations()).resolves.toEqual(
-      mockStations.filter((station) => station.sourceKey === "uk-gov")
+    await expect(provider.fetchStations()).resolves.toEqual([
+      expect.objectContaining({
+        externalId: "default-url-1",
+        name: "Default URL Court",
+        city: "Bristol"
+      })
+    ]);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api.fuelfinder.service.gov.uk/v1/prices",
+      expect.objectContaining({
+        next: { revalidate: 0 }
+      })
     );
   });
 

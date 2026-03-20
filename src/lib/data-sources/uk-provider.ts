@@ -299,10 +299,7 @@ export class UkFuelProvider implements FuelDataSource {
   label = "UK Fuel Finder";
 
   async fetchStations(): Promise<NormalizedStation[]> {
-    const url = process.env.UK_FUEL_API_URL?.trim();
-    if (!url) {
-      return mockStations.filter((station) => station.sourceKey === this.key);
-    }
+    const url = getBaseUrl();
 
     try {
       const accessToken = await getAccessToken();
