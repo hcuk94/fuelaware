@@ -8,6 +8,31 @@ type SearchOptions = {
   limit?: number;
 };
 
+type SearchProduct = {
+  id: string;
+  displayName: string;
+  lastPrice: unknown;
+  currency: string;
+  unit: string;
+};
+
+type SearchStation = {
+  id: string;
+  name: string;
+  city: string | null;
+  postcode: string | null;
+  addressLine1: string | null;
+  brand: string | null;
+  latitude: number;
+  longitude: number;
+  countryCode: string;
+  products: SearchProduct[];
+};
+
+type SearchResult = SearchStation & {
+  distanceKm: number | null;
+};
+
 export async function searchStations(options: SearchOptions) {
   const limit = options.limit ?? 20;
   const where = options.q
@@ -32,7 +57,7 @@ export async function searchStations(options: SearchOptions) {
     take: 100
   });
 
-  const withDistance = stations.map((station) => {
+  const withDistance = (stations as SearchStation[]).map((station: SearchStation): SearchResult => {
     const distance =
       options.latitude != null && options.longitude != null
         ? distanceKm(options.latitude, options.longitude, station.latitude, station.longitude)
@@ -45,7 +70,7 @@ export async function searchStations(options: SearchOptions) {
   });
 
   return withDistance
-    .sort((left, right) => {
+    .sort((left: SearchResult, right: SearchResult) => {
       if (left.distanceKm == null && right.distanceKm == null) {
         return left.name.localeCompare(right.name);
       }

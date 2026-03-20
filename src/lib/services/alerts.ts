@@ -2,6 +2,44 @@ import { PrismaClient } from "@prisma/client";
 import nodemailer from "nodemailer";
 import { formatPrice } from "@/lib/utils/format";
 
+type AlertSnapshot = {
+  observedAt: Date;
+  price: unknown;
+};
+
+type AlertUser = {
+  email: string | null;
+};
+
+type AlertFavourite = {
+  user: AlertUser;
+};
+
+type ProductAlert = {
+  id: string;
+  isEnabled: boolean;
+  thresholdPrice: unknown;
+  lowestLookbackDays: number | null;
+  favourite: AlertFavourite;
+};
+
+type AlertStation = {
+  name: string;
+  addressLine1: string | null;
+  city: string | null;
+};
+
+type AlertProduct = {
+  id: string;
+  displayName: string;
+  currency: string;
+  unit: string;
+  lastPrice: unknown;
+  station: AlertStation;
+  alerts: ProductAlert[];
+  snapshots: AlertSnapshot[];
+};
+
 function buildTransport() {
   if (process.env.SMTP_HOST) {
     return nodemailer.createTransport({
@@ -55,9 +93,11 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
 
   if (!product) return;
 
-  const currentPrice = Number(product.lastPrice);
+  const typedProduct = product as AlertProduct;
 
-  for (const alert of product.alerts) {
+  const currentPrice = Number(typedProduct.lastPrice);
+
+  for (const alert of typedProduct.alerts) {
     if (!alert.isEnabled) continue;
     const email = alert.favourite.user.email;
     if (!email) continue;
@@ -67,16 +107,18 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
 
     if (alert.thresholdPrice != null && currentPrice <= Number(alert.thresholdPrice)) {
       shouldTrigger = true;
-      reason = `Price dropped below your threshold: ${formatPrice(currentPrice, product.currency, product.unit)}`;
+      reason = `Price dropped below your threshold: ${formatPrice(currentPrice, typedProduct.currency, typedProduct.unit)}`;
     }
 
     if (!shouldTrigger && alert.lowestLookbackDays != null) {
       const cutoff = Date.now() - alert.lowestLookbackDays * 24 * 60 * 60 * 1000;
-      const relevant = product.snapshots.filter((snapshot) => snapshot.observedAt.getTime() >= cutoff);
-      const minimum = Math.min(...relevant.map((snapshot) => Number(snapshot.price)));
+      const relevant = typedProduct.snapshots.filter(
+        (snapshot: AlertSnapshot) => snapshot.observedAt.getTime() >= cutoff
+      );
+      const minimum = Math.min(...relevant.map((snapshot: AlertSnapshot) => Number(snapshot.price)));
       if (relevant.length > 0 && currentPrice <= minimum) {
         shouldTrigger = true;
-        reason = `Price is at a ${alert.lowestLookbackDays}-day low: ${formatPrice(currentPrice, product.currency, product.unit)}`;
+        reason = `Price is at a ${alert.lowestLookbackDays}-day low: ${formatPrice(currentPrice, typedProduct.currency, typedProduct.unit)}`;
       }
     }
 
@@ -84,8 +126,8 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
 
     await sendAlertEmail(
       email,
-      `FuelAware alert for ${product.station.name}`,
-      `${reason}\n\n${product.displayName} at ${product.station.name}\n${product.station.addressLine1 ?? ""}\n${product.station.city ?? ""}`
+      `FuelAware alert for ${typedProduct.station.name}`,
+      `${reason}\n\n${typedProduct.displayName} at ${typedProduct.station.name}\n${typedProduct.station.addressLine1 ?? ""}\n${typedProduct.station.city ?? ""}`
     );
 
     await prisma.alertRule.update({
