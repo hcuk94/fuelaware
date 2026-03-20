@@ -136,18 +136,12 @@ export class FranceFuelProvider implements FuelDataSource {
   label = "France Prix des carburants";
 
   async fetchStations(): Promise<NormalizedStation[]> {
-    const url =
+    const baseUrl =
       process.env.FRANCE_FUEL_API_URL ??
-      "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100";
+      "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records";
 
     try {
-      const response = await fetchWithEnvProxy(url, { next: { revalidate: 0 } });
-      if (!response.ok) {
-        throw new Error(`France provider failed with ${response.status}`);
-      }
-
-      const payload = (await response.json()) as { results?: FranceRecord[]; records?: FranceRecord[] };
-      const records = payload.results ?? payload.records ?? [];
+      const records = await this.fetchAllRecords(baseUrl);
 
       const stations = records
         .map<NormalizedStation | null>((record) => {
@@ -209,5 +203,48 @@ export class FranceFuelProvider implements FuelDataSource {
       console.warn("Using France mock data because provider fetch failed.", error);
       return mockStations.filter((station) => station.sourceKey === this.key);
     }
+  }
+
+  private async fetchAllRecords(baseUrl: string) {
+    const initialUrl = new URL(baseUrl);
+    const limit = Number(initialUrl.searchParams.get("limit") ?? "100");
+    const pageSize = Number.isFinite(limit) && limit > 0 ? limit : 100;
+    const initialOffset = Number(initialUrl.searchParams.get("offset") ?? "0");
+    const offsetBase = Number.isFinite(initialOffset) && initialOffset >= 0 ? initialOffset : 0;
+    const records: FranceRecord[] = [];
+    let page = 0;
+    let totalCount: number | undefined;
+
+    while (true) {
+      const pageUrl = new URL(baseUrl);
+      pageUrl.searchParams.set("limit", String(pageSize));
+      pageUrl.searchParams.set("offset", String(offsetBase + page * pageSize));
+
+      const response = await fetchWithEnvProxy(pageUrl.toString(), { next: { revalidate: 0 } });
+      if (!response.ok) {
+        throw new Error(`France provider failed with ${response.status}`);
+      }
+
+      const payload = (await response.json()) as {
+        total_count?: number;
+        results?: FranceRecord[];
+        records?: FranceRecord[];
+      };
+      const pageRecords = payload.results ?? payload.records ?? [];
+      totalCount = payload.total_count ?? totalCount;
+      records.push(...pageRecords);
+
+      if (pageRecords.length < pageSize) {
+        break;
+      }
+
+      if (typeof totalCount === "number" && records.length >= totalCount) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return records;
   }
 }
