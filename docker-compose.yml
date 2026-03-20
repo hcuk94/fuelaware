@@ -21,7 +21,10 @@ services:
       DATABASE_FILE_PATH: /app/data/dev.db
       DATABASE_URL: file:/app/data/dev.db
       UK_FUEL_API_URL: ${UK_FUEL_API_URL:-}
-      UK_FUEL_API_KEY: ${UK_FUEL_API_KEY:-}
+      UK_FUEL_CLIENT_ID: ${UK_FUEL_CLIENT_ID:-}
+      UK_FUEL_CLIENT_SECRET: ${UK_FUEL_CLIENT_SECRET:-}
+      UK_FUEL_TOKEN_URL: ${UK_FUEL_TOKEN_URL:-}
+      UK_FUEL_API_SCOPE: ${UK_FUEL_API_SCOPE:-fuelfinder.read}
       FRANCE_FUEL_API_URL: ${FRANCE_FUEL_API_URL:-https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100}
       HTTP_PROXY: ${HTTP_PROXY:-}
       HTTPS_PROXY: ${HTTPS_PROXY:-}
