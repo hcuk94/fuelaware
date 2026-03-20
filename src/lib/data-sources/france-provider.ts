@@ -1,6 +1,5 @@
-import { FuelCategory, SiteType } from "@prisma/client";
 import { mockStations } from "./mock-data";
-import type { FuelDataSource, NormalizedStation } from "./types";
+import { FuelCategory, SiteType, type FuelDataSource, type NormalizedStation } from "./types";
 
 type FranceRecord = {
   id?: string;

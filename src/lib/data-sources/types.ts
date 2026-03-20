@@ -1,4 +1,20 @@
-import { FuelCategory, SiteType } from "@prisma/client";
+export const FuelCategory = {
+  PETROL: "PETROL",
+  DIESEL: "DIESEL",
+  ELECTRIC: "ELECTRIC",
+  LPG: "LPG",
+  HYDROGEN: "HYDROGEN",
+  OTHER: "OTHER"
+} as const;
+
+export type FuelCategory = (typeof FuelCategory)[keyof typeof FuelCategory];
+
+export const SiteType = {
+  STATION: "STATION",
+  CHARGER: "CHARGER"
+} as const;
+
+export type SiteType = (typeof SiteType)[keyof typeof SiteType];
 
 export type NormalizedFuelProduct = {
   productCode: string;

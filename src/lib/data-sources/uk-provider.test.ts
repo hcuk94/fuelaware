@@ -1,6 +1,6 @@
-import { FuelCategory } from "@prisma/client";
 import { mockStations } from "./mock-data";
 import { UkFuelProvider } from "./uk-provider";
+import { FuelCategory } from "./types";
 
 describe("UkFuelProvider", () => {
   const originalFetch = global.fetch;

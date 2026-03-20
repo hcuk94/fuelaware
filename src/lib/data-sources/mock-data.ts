@@ -1,5 +1,4 @@
-import { FuelCategory, SiteType } from "@prisma/client";
-import type { NormalizedStation } from "./types";
+import { FuelCategory, SiteType, type NormalizedStation } from "./types";
 
 const now = new Date();
 
