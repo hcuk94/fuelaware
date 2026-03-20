@@ -13,23 +13,42 @@ describe("UkFuelProvider", () => {
 
   it("defaults to the government URL when no API URL is configured", async () => {
     process.env = { ...originalEnv, UK_FUEL_API_URL: "" };
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: [
-          {
-            site_id: "default-url-1",
-            site_name: "Default URL Court",
-            town: "Bristol",
-            lat: 51.45,
-            lon: -2.58,
-            prices: {
-              e10: 1.49
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              site_id: "default-url-1",
+              site_name: "Default URL Court",
+              town: "Bristol",
+              lat: 51.45,
+              lon: -2.58
             }
-          }
-        ]
+          ]
+        })
       })
-    }) as typeof fetch;
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              site_id: "default-url-1",
+              fuel_type: "e10",
+              price: 1.49,
+              observed_at: "2026-03-20T10:00:00Z",
+              site: {
+                site_id: "default-url-1",
+                site_name: "Default URL Court",
+                town: "Bristol",
+                lat: 51.45,
+                lon: -2.58
+              }
+            }
+          ]
+        })
+      }) as typeof fetch;
     const provider = new UkFuelProvider();
 
     await expect(provider.fetchStations()).resolves.toEqual([
@@ -40,7 +59,13 @@ describe("UkFuelProvider", () => {
       })
     ]);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://www.fuel-finder.service.gov.uk/api/v1/prices",
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs",
+      expect.objectContaining({
+        next: { revalidate: 0 }
+      })
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices",
       expect.objectContaining({
         next: { revalidate: 0 }
       })
@@ -78,11 +103,45 @@ describe("UkFuelProvider", () => {
               town: "Leeds",
               postcode: "LS1",
               lat: 53.8,
-              lon: -1.54,
-              last_updated: "2026-03-20T10:00:00Z",
-              prices: {
-                e10: 1.52,
-                b7: 1.61
+              lon: -1.54
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              site_id: "demo-1",
+              fuel_type: "e10",
+              price: 1.52,
+              observed_at: "2026-03-20T10:00:00Z",
+              site: {
+                site_id: "demo-1",
+                site_name: "Demo Court",
+                brand: "DemoFuel",
+                address: "1 Demo Street",
+                town: "Leeds",
+                postcode: "LS1",
+                lat: 53.8,
+                lon: -1.54
+              }
+            },
+            {
+              site_id: "demo-1",
+              fuel_type: "b7",
+              price: 1.61,
+              observed_at: "2026-03-20T10:00:00Z",
+              site: {
+                site_id: "demo-1",
+                site_name: "Demo Court",
+                brand: "DemoFuel",
+                address: "1 Demo Street",
+                town: "Leeds",
+                postcode: "LS1",
+                lat: 53.8,
+                lon: -1.54
               }
             }
           ]
@@ -111,7 +170,16 @@ describe("UkFuelProvider", () => {
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       2,
-      "https://www.fuel-finder.service.gov.uk/api/v1/prices",
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs",
+      expect.objectContaining({
+        headers: {
+          Authorization: "Bearer access-token"
+        }
+      })
+    );
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      3,
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices",
       expect.objectContaining({
         headers: {
           Authorization: "Bearer access-token"
@@ -135,16 +203,13 @@ describe("UkFuelProvider", () => {
 
   it("groups row-based government API records by forecourt", async () => {
     process.env = { ...originalEnv, UK_FUEL_API_URL: "https://example.test/uk" };
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        results: [
-          {
-            forecourt_id: "gb-123",
-            fuel_type: "e10",
-            price: 1.48,
-            observed_at: "2026-03-20T10:00:00Z",
-            forecourt: {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            {
               forecourt_id: "gb-123",
               name: "City Forecourt",
               address: "10 High Street",
@@ -154,26 +219,48 @@ describe("UkFuelProvider", () => {
               longitude: -1.08,
               brand: "Fuel Finder"
             }
-          },
-          {
-            forecourt_id: "gb-123",
-            fuel_type: "b7",
-            price: 1.56,
-            observed_at: "2026-03-20T10:00:00Z",
-            forecourt: {
-              forecourt_id: "gb-123",
-              name: "City Forecourt",
-              address: "10 High Street",
-              city: "York",
-              postcode: "YO1 1AA",
-              latitude: 53.96,
-              longitude: -1.08,
-              brand: "Fuel Finder"
-            }
-          }
-        ]
+          ]
+        })
       })
-    }) as typeof fetch;
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            {
+              forecourt_id: "gb-123",
+              fuel_type: "e10",
+              price: 1.48,
+              observed_at: "2026-03-20T10:00:00Z",
+              forecourt: {
+                forecourt_id: "gb-123",
+                name: "City Forecourt",
+                address: "10 High Street",
+                city: "York",
+                postcode: "YO1 1AA",
+                latitude: 53.96,
+                longitude: -1.08,
+                brand: "Fuel Finder"
+              }
+            },
+            {
+              forecourt_id: "gb-123",
+              fuel_type: "b7",
+              price: 1.56,
+              observed_at: "2026-03-20T10:00:00Z",
+              forecourt: {
+                forecourt_id: "gb-123",
+                name: "City Forecourt",
+                address: "10 High Street",
+                city: "York",
+                postcode: "YO1 1AA",
+                latitude: 53.96,
+                longitude: -1.08,
+                brand: "Fuel Finder"
+              }
+            }
+          ]
+        })
+      }) as typeof fetch;
 
     const provider = new UkFuelProvider();
     const stations = await provider.fetchStations();

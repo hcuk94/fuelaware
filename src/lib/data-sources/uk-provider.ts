@@ -116,13 +116,22 @@ function getApiRootUrl() {
   );
 }
 
-function getPricesUrl() {
+function getForecourtsUrl() {
   const apiRootUrl = getApiRootUrl();
-  if (apiRootUrl.endsWith("/prices")) {
+  if (apiRootUrl.endsWith("/pfs")) {
     return apiRootUrl;
   }
 
-  return `${apiRootUrl}/prices`;
+  return `${apiRootUrl}/pfs`;
+}
+
+function getFuelPricesUrl() {
+  const apiRootUrl = getApiRootUrl();
+  if (apiRootUrl.endsWith("/pfs/fuel-prices")) {
+    return apiRootUrl;
+  }
+
+  return `${apiRootUrl}/pfs/fuel-prices`;
 }
 
 function getTokenUrl() {
@@ -160,6 +169,53 @@ function extractRecords(payload: unknown): UkApiRecord[] {
     payloadRecord.prices;
 
   return Array.isArray(collection) ? (collection as UkApiRecord[]) : [];
+}
+
+function getNextPage(payload: unknown): string | number | undefined {
+  const payloadRecord = asRecord(payload);
+  if (!payloadRecord) {
+    return undefined;
+  }
+
+  return asString(payloadRecord.next_page) ?? asString(payloadRecord.next) ?? asNumber(payloadRecord.next_page);
+}
+
+async function fetchAllRecords(url: string, accessToken: string | undefined) {
+  const records: UkApiRecord[] = [];
+  let nextUrl: string | undefined = url;
+  let pageCount = 0;
+
+  while (nextUrl) {
+    const response = await fetchWithEnvProxy(nextUrl, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      cache: "no-store",
+      next: { revalidate: 0 }
+    });
+
+    if (!response.ok) {
+      throw new Error(`UK provider failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    records.push(...extractRecords(payload));
+    pageCount += 1;
+
+    const nextPage = getNextPage(payload);
+    if (!nextPage || pageCount >= 100) {
+      break;
+    }
+
+    if (typeof nextPage === "string" && /^https?:\/\//.test(nextPage)) {
+      nextUrl = nextPage;
+      continue;
+    }
+
+    const urlObject = new URL(url);
+    urlObject.searchParams.set("page", String(nextPage));
+    nextUrl = urlObject.toString();
+  }
+
+  return records;
 }
 
 function getStationIdentity(record: UkApiRecord) {
@@ -312,25 +368,24 @@ export class UkFuelProvider implements FuelDataSource {
   label = "UK Fuel Finder";
 
   async fetchStations(): Promise<NormalizedStation[]> {
-    const url = getPricesUrl();
-
     try {
       const accessToken = await getAccessToken();
-      const response = await fetchWithEnvProxy(url, {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        cache: "no-store",
-        next: { revalidate: 0 }
-      });
-
-      if (!response.ok) {
-        throw new Error(`UK provider failed with ${response.status}`);
-      }
-
-      const payload = await response.json();
-      const records = extractRecords(payload);
+      const [forecourtRecords, fuelPriceRecords] = await Promise.all([
+        fetchAllRecords(getForecourtsUrl(), accessToken),
+        fetchAllRecords(getFuelPricesUrl(), accessToken)
+      ]);
       const stationsById = new Map<string, NormalizedStation>();
 
-      for (const record of records) {
+      for (const record of forecourtRecords) {
+        const station = buildStationSeed(record);
+        if (!station) {
+          continue;
+        }
+
+        stationsById.set(station.externalId, station);
+      }
+
+      for (const record of fuelPriceRecords) {
         const station = buildStationSeed(record);
         if (!station) {
           continue;
