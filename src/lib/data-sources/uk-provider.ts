@@ -103,11 +103,20 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
-function getBaseUrl() {
-  return (process.env.UK_FUEL_API_URL?.trim() || "https://api.fuelfinder.service.gov.uk/v1/prices").replace(
+function getApiRootUrl() {
+  return (process.env.UK_FUEL_API_URL?.trim() || "https://www.fuel-finder.service.gov.uk/api/v1/").replace(
     /\/$/,
     ""
   );
+}
+
+function getPricesUrl() {
+  const apiRootUrl = getApiRootUrl();
+  if (apiRootUrl.endsWith("/prices")) {
+    return apiRootUrl;
+  }
+
+  return `${apiRootUrl}/prices`;
 }
 
 function getTokenUrl() {
@@ -116,8 +125,8 @@ function getTokenUrl() {
     return configuredTokenUrl;
   }
 
-  const apiUrl = getBaseUrl();
-  const origin = new URL(apiUrl).origin;
+  const apiRootUrl = getApiRootUrl();
+  const origin = new URL(apiRootUrl).origin;
   return `${origin}/oauth/token`;
 }
 
@@ -299,7 +308,7 @@ export class UkFuelProvider implements FuelDataSource {
   label = "UK Fuel Finder";
 
   async fetchStations(): Promise<NormalizedStation[]> {
-    const url = getBaseUrl();
+    const url = getPricesUrl();
 
     try {
       const accessToken = await getAccessToken();

@@ -40,7 +40,7 @@ describe("UkFuelProvider", () => {
       })
     ]);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://api.fuelfinder.service.gov.uk/v1/prices",
+      "https://www.fuel-finder.service.gov.uk/api/v1/prices",
       expect.objectContaining({
         next: { revalidate: 0 }
       })
@@ -50,10 +50,10 @@ describe("UkFuelProvider", () => {
   it("normalizes upstream station data", async () => {
     process.env = {
       ...originalEnv,
-      UK_FUEL_API_URL: "https://api.fuelfinder.service.gov.uk/v1/prices",
+      UK_FUEL_API_URL: "https://www.fuel-finder.service.gov.uk/api/v1/",
       UK_FUEL_CLIENT_ID: "demo-client",
       UK_FUEL_CLIENT_SECRET: "demo-secret",
-      UK_FUEL_TOKEN_URL: "https://api.fuelfinder.service.gov.uk/oauth/token"
+      UK_FUEL_TOKEN_URL: "https://www.fuel-finder.service.gov.uk/oauth/token"
     };
     global.fetch = vi
       .fn()
@@ -92,7 +92,7 @@ describe("UkFuelProvider", () => {
 
     expect(global.fetch).toHaveBeenNthCalledWith(
       1,
-      "https://api.fuelfinder.service.gov.uk/oauth/token",
+      "https://www.fuel-finder.service.gov.uk/oauth/token",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -102,7 +102,7 @@ describe("UkFuelProvider", () => {
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       2,
-      "https://api.fuelfinder.service.gov.uk/v1/prices",
+      "https://www.fuel-finder.service.gov.uk/api/v1/prices",
       expect.objectContaining({
         headers: {
           Authorization: "Bearer access-token"
