@@ -4,6 +4,10 @@ import Nodemailer from "next-auth/providers/nodemailer";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/services/settings";
 
+function normalizeEmail(email?: string | null) {
+  return email?.trim().toLowerCase();
+}
+
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   trustHost: true,
@@ -34,8 +38,30 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async signIn({ user }) {
       const settings = await getSettings();
-      const email = user.email?.toLowerCase();
+      const email = normalizeEmail(user.email);
       if (!email) return false;
+
+      const adminEmail = normalizeEmail(settings.adminEmail);
+      if (adminEmail && email === adminEmail) {
+        const existingAdmin = await prisma.user.findFirst({
+          where: { role: "ADMIN" }
+        });
+
+        if (existingAdmin && existingAdmin.email !== email) {
+          await prisma.user.update({
+            where: { id: existingAdmin.id },
+            data: { email, role: "ADMIN", emailVerified: existingAdmin.emailVerified ?? new Date() }
+          });
+        } else if (!existingAdmin) {
+          await prisma.user.upsert({
+            where: { email },
+            update: { role: "ADMIN", emailVerified: new Date() },
+            create: { email, role: "ADMIN", emailVerified: new Date() }
+          });
+        }
+
+        return true;
+      }
 
       if (!settings.registrationEnabled) {
         const existing = await prisma.user.findUnique({ where: { email } });

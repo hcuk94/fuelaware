@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function normalizeEmail(email?: string | null) {
+  const normalized = email?.trim().toLowerCase();
+  return normalized || null;
+}
+
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -14,20 +19,34 @@ export async function POST(request: NextRequest) {
     adminEmail?: string;
   };
 
+  const adminEmail = normalizeEmail(body.adminEmail);
+
   const settings = await prisma.appSettings.upsert({
     where: { id: "singleton" },
     update: {
       registrationEnabled: body.registrationEnabled ?? true,
       allowManualSync: body.allowManualSync ?? true,
-      adminEmail: body.adminEmail
+      adminEmail
     },
     create: {
       id: "singleton",
       registrationEnabled: body.registrationEnabled ?? true,
       allowManualSync: body.allowManualSync ?? true,
-      adminEmail: body.adminEmail
+      adminEmail
     }
   });
+
+  if (adminEmail) {
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { role: "ADMIN" },
+      create: {
+        email: adminEmail,
+        role: "ADMIN",
+        emailVerified: new Date()
+      }
+    });
+  }
 
   return NextResponse.json({ settings });
 }

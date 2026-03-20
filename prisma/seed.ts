@@ -4,8 +4,16 @@ import { createPrismaClient } from "../src/lib/prisma-client";
 
 const prisma = createPrismaClient();
 
+function normalizeEmail(email?: string | null) {
+  return email?.trim().toLowerCase();
+}
+
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@example.com";
+  const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL ?? "admin@example.com");
+
+  if (!adminEmail) {
+    throw new Error("ADMIN_EMAIL must be a non-empty email address.");
+  }
 
   await prisma.appSettings.upsert({
     where: { id: "singleton" },

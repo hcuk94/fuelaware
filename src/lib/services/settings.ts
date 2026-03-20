@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
+function normalizeEmail(email?: string | null) {
+  return email?.trim().toLowerCase();
+}
+
 export async function getSettings() {
   return prisma.appSettings.upsert({
     where: { id: "singleton" },
@@ -8,7 +12,7 @@ export async function getSettings() {
       id: "singleton",
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
       allowManualSync: true,
-      adminEmail: process.env.ADMIN_EMAIL
+      adminEmail: normalizeEmail(process.env.ADMIN_EMAIL)
     }
   });
 }
