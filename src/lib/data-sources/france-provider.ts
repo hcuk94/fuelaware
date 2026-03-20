@@ -58,6 +58,8 @@ type FrancePriceEntry = {
   updatedAt?: string;
 };
 
+type FranceNamedPrice = Extract<FranceRawPrice, { name?: string; value?: string | number; updated_at?: string }>;
+
 const FRANCE_COLUMN_PRICE_FIELDS = [
   { name: "Gazole", priceKey: "gazole_prix", updatedAtKey: "gazole_maj" },
   { name: "SP95", priceKey: "sp95_prix", updatedAtKey: "sp95_maj" },
@@ -87,7 +89,7 @@ function normalizePriceEntry(entry: FranceRawPrice): FrancePriceEntry {
     };
   }
 
-  const other = entry as Extract<FrancePriceEntry, { name?: string; value?: string | number; updated_at?: string }>;
+  const other = entry as FranceNamedPrice;
   return {
     name: other.name,
     value: other.value,
