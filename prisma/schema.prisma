@@ -58,6 +58,7 @@ model AppSettings {
   id                  String   @id
   registrationEnabled Boolean  @default(true)
   allowManualSync     Boolean  @default(true)
+  storeStationHistoryForAll Boolean @default(false)
   adminEmail          String?
   enabledProviderKeys Json?
   manualSyncStatus    String   @default("IDLE")

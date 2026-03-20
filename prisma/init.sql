@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS "AppSettings" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "registrationEnabled" BOOLEAN NOT NULL DEFAULT true,
   "allowManualSync" BOOLEAN NOT NULL DEFAULT true,
+  "storeStationHistoryForAll" BOOLEAN NOT NULL DEFAULT false,
   "adminEmail" TEXT,
   "enabledProviderKeys" TEXT,
   "manualSyncStatus" TEXT NOT NULL DEFAULT 'IDLE',

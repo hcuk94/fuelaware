@@ -21,6 +21,7 @@ async function main() {
     update: {
       adminEmail,
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
+      storeStationHistoryForAll: false,
       enabledProviderKeys: providerCatalog.map((provider) => provider.key)
     },
     create: {
@@ -28,6 +29,7 @@ async function main() {
       adminEmail,
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
       allowManualSync: true,
+      storeStationHistoryForAll: false,
       enabledProviderKeys: providerCatalog.map((provider) => provider.key)
     }
   });

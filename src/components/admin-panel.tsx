@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 type Settings = {
   registrationEnabled: boolean;
   allowManualSync: boolean;
+  storeStationHistoryForAll: boolean;
   adminEmail: string | null;
   enabledProviderKeys: string[];
 };
@@ -168,6 +169,19 @@ export function AdminPanel({
         />
         Allow manual sync
       </label>
+      <label className="checkbox">
+        <input
+          type="checkbox"
+          checked={form.storeStationHistoryForAll}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, storeStationHistoryForAll: event.target.checked }))
+          }
+        />
+        Store history for all stations
+      </label>
+      <p className="muted">
+        Disabled by default so snapshots are only stored for stations users have favourited.
+      </p>
       <label>
         Admin email
         <input

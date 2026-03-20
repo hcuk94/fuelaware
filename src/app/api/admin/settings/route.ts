@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as {
     registrationEnabled?: boolean;
     allowManualSync?: boolean;
+    storeStationHistoryForAll?: boolean;
     adminEmail?: string;
     enabledProviderKeys?: unknown;
   };
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
     update: {
       registrationEnabled: body.registrationEnabled ?? currentSettings.registrationEnabled,
       allowManualSync: body.allowManualSync ?? currentSettings.allowManualSync,
+      storeStationHistoryForAll: body.storeStationHistoryForAll ?? currentSettings.storeStationHistoryForAll,
       adminEmail,
       enabledProviderKeys
     },
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
       id: "singleton",
       registrationEnabled: body.registrationEnabled ?? currentSettings.registrationEnabled,
       allowManualSync: body.allowManualSync ?? currentSettings.allowManualSync,
+      storeStationHistoryForAll: body.storeStationHistoryForAll ?? currentSettings.storeStationHistoryForAll,
       adminEmail,
       enabledProviderKeys
     }

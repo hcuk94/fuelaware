@@ -47,6 +47,20 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma,
   const summaries: IngestSummary[] = [];
   const sources = options.sources ?? dataSources;
   const totalSources = sources.length;
+  const settings = await client.appSettings.findUnique({
+    where: { id: "singleton" },
+    select: { storeStationHistoryForAll: true }
+  });
+  const storeStationHistoryForAll = settings?.storeStationHistoryForAll ?? false;
+  const favouriteStationIds = storeStationHistoryForAll
+    ? new Set<string>()
+    : new Set(
+        (
+          await client.favourite.findMany({
+            select: { stationId: true }
+          })
+        ).map((favourite) => favourite.stationId)
+      );
 
   for (const [sourceIndex, source] of sources.entries()) {
     await options.onProgress?.({
@@ -134,6 +148,11 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma,
             metadata: normalizeMetadata(product.metadata)
           }
         });
+
+        const shouldStoreHistory = storeStationHistoryForAll || favouriteStationIds.has(storedStation.id);
+        if (!shouldStoreHistory) {
+          continue;
+        }
 
         await client.priceSnapshot.create({
           data: {

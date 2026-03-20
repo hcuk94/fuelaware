@@ -34,6 +34,7 @@ export async function getSettings() {
       id: "singleton",
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
       allowManualSync: true,
+      storeStationHistoryForAll: false,
       adminEmail: normalizeEmail(process.env.ADMIN_EMAIL),
       enabledProviderKeys: defaultEnabledProviderKeys
     }
