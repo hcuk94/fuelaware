@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String?     @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole    @default(USER)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  favourites    Favourite[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model AppSettings {
+  id                  String   @id
+  registrationEnabled Boolean  @default(true)
+  allowManualSync     Boolean  @default(true)
+  adminEmail          String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Station {
+  id           String         @id @default(cuid())
+  sourceKey    String
+  externalId   String
+  name         String
+  type         SiteType       @default(STATION)
+  countryCode  String
+  addressLine1 String?
+  city         String?
+  postcode     String?
+  latitude     Float
+  longitude    Float
+  brand        String?
+  operatorName String?
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  products     FuelProduct[]
+  favourites   Favourite[]
+
+  @@unique([sourceKey, externalId])
+  @@index([countryCode, city])
+}
+
+model FuelProduct {
+  id            String          @id @default(cuid())
+  stationId     String
+  productCode   String
+  displayName   String
+  category      FuelCategory
+  unit          String
+  currency      String
+  lastPrice     Decimal
+  lastUpdatedAt DateTime
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  station       Station         @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  snapshots     PriceSnapshot[]
+  alerts        AlertRule[]
+
+  @@unique([stationId, productCode])
+}
+
+model PriceSnapshot {
+  id               String      @id @default(cuid())
+  fuelProductId    String
+  price            Decimal
+  currency         String
+  unit             String
+  observedAt       DateTime
+  createdAt        DateTime    @default(now())
+  fuelProduct      FuelProduct @relation(fields: [fuelProductId], references: [id], onDelete: Cascade)
+
+  @@index([fuelProductId, observedAt])
+}
+
+model Favourite {
+  id        String      @id @default(cuid())
+  userId    String
+  stationId String
+  nickname  String?
+  createdAt DateTime    @default(now())
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station   Station     @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  alerts    AlertRule[]
+
+  @@unique([userId, stationId])
+}
+
+model AlertRule {
+  id                String      @id @default(cuid())
+  favouriteId       String
+  fuelProductId     String?
+  thresholdPrice    Decimal?
+  lowestLookbackDays Int?
+  isEnabled         Boolean     @default(true)
+  lastTriggeredAt   DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  favourite         Favourite   @relation(fields: [favouriteId], references: [id], onDelete: Cascade)
+  fuelProduct       FuelProduct? @relation(fields: [fuelProductId], references: [id], onDelete: SetNull)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SiteType {
+  STATION
+  CHARGER
+}
+
+enum FuelCategory {
+  PETROL
+  DIESEL
+  ELECTRIC
+  LPG
+  HYDROGEN
+  OTHER
+}

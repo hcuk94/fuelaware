@@ -1,0 +1,93 @@
+import { PrismaClient, Prisma } from "@prisma/client";
+import { ingestLatestSnapshots } from "../src/lib/services/ingest";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@example.com";
+
+  await prisma.appSettings.upsert({
+    where: { id: "singleton" },
+    update: {
+      adminEmail,
+      registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true"
+    },
+    create: {
+      id: "singleton",
+      adminEmail,
+      registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
+      allowManualSync: true
+    }
+  });
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { role: "ADMIN" },
+    create: {
+      email: adminEmail,
+      role: "ADMIN",
+      emailVerified: new Date()
+    }
+  });
+
+  const count = await prisma.station.count();
+  if (count === 0) {
+    await ingestLatestSnapshots(prisma);
+  }
+
+  const firstUser = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const firstStation = await prisma.station.findFirst({ include: { products: true } });
+
+  if (firstUser && firstStation) {
+    const favourite = await prisma.favourite.upsert({
+      where: {
+        userId_stationId: {
+          userId: firstUser.id,
+          stationId: firstStation.id
+        }
+      },
+      update: {},
+      create: {
+        userId: firstUser.id,
+        stationId: firstStation.id,
+        nickname: "Seeded favourite"
+      }
+    });
+
+    const firstProduct = firstStation.products[0];
+    if (firstProduct) {
+      const existingAlerts = await prisma.alertRule.count({
+        where: {
+          favouriteId: favourite.id,
+          fuelProductId: firstProduct.id
+        }
+      });
+
+      if (existingAlerts === 0) {
+        await prisma.alertRule.createMany({
+          data: [
+            {
+              favouriteId: favourite.id,
+              fuelProductId: firstProduct.id,
+              thresholdPrice: new Prisma.Decimal("1.60")
+            },
+            {
+              favouriteId: favourite.id,
+              fuelProductId: firstProduct.id,
+              lowestLookbackDays: 30
+            }
+          ]
+        });
+      }
+    }
+  }
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

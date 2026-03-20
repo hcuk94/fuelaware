@@ -1,0 +1,44 @@
+{
+  "name": "fuelaware",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "db:init": "sqlite3 prisma/dev.db \".read prisma/init.sql\"",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
+    "@prisma/client": "^6.6.0",
+    "next": "^16.0.0",
+    "next-auth": "^5.0.0-beta.25",
+    "nodemailer": "^7.0.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^3.0.2",
+    "zod": "^4.0.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.0.1",
+    "@types/nodemailer": "^7.0.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitest/coverage-v8": "^4.1.0",
+    "jsdom": "^29.0.1",
+    "prisma": "^6.6.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.0"
+  }
+}
