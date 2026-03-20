@@ -6,6 +6,12 @@ type Settings = {
   registrationEnabled: boolean;
   allowManualSync: boolean;
   adminEmail: string | null;
+  enabledProviderKeys: string[];
+};
+
+type ProviderOption = {
+  key: string;
+  label: string;
 };
 
 type SyncSummaryItem = {
@@ -56,7 +62,15 @@ function syncStateTone(status: string) {
   return "sync-state-neutral";
 }
 
-export function AdminPanel({ settings, initialManualSync }: { settings: Settings; initialManualSync: ManualSyncState }) {
+export function AdminPanel({
+  settings,
+  initialManualSync,
+  providerOptions
+}: {
+  settings: Settings;
+  initialManualSync: ManualSyncState;
+  providerOptions: ProviderOption[];
+}) {
   const [form, setForm] = useState(settings);
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -162,6 +176,26 @@ export function AdminPanel({ settings, initialManualSync }: { settings: Settings
           onChange={(event) => setForm((current) => ({ ...current, adminEmail: event.target.value }))}
         />
       </label>
+      <fieldset className="stack">
+        <legend>Enabled providers</legend>
+        {providerOptions.map((provider) => (
+          <label key={provider.key} className="checkbox">
+            <input
+              type="checkbox"
+              checked={form.enabledProviderKeys.includes(provider.key)}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  enabledProviderKeys: event.target.checked
+                    ? [...current.enabledProviderKeys, provider.key]
+                    : current.enabledProviderKeys.filter((key) => key !== provider.key)
+                }))
+              }
+            />
+            {provider.label}
+          </label>
+        ))}
+      </fieldset>
       <div className="actions">
         <button type="button" onClick={save} disabled={saving}>
           {saving ? "Saving..." : "Save settings"}

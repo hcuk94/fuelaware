@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSettings, normalizeEnabledProviderKeys } from "@/lib/services/settings";
 
 function normalizeEmail(email?: string | null) {
   const normalized = email?.trim().toLowerCase();
@@ -17,22 +18,27 @@ export async function POST(request: NextRequest) {
     registrationEnabled?: boolean;
     allowManualSync?: boolean;
     adminEmail?: string;
+    enabledProviderKeys?: unknown;
   };
 
+  const currentSettings = await getSettings();
   const adminEmail = normalizeEmail(body.adminEmail);
+  const enabledProviderKeys = normalizeEnabledProviderKeys(body.enabledProviderKeys);
 
   const settings = await prisma.appSettings.upsert({
     where: { id: "singleton" },
     update: {
-      registrationEnabled: body.registrationEnabled ?? true,
-      allowManualSync: body.allowManualSync ?? true,
-      adminEmail
+      registrationEnabled: body.registrationEnabled ?? currentSettings.registrationEnabled,
+      allowManualSync: body.allowManualSync ?? currentSettings.allowManualSync,
+      adminEmail,
+      enabledProviderKeys
     },
     create: {
       id: "singleton",
-      registrationEnabled: body.registrationEnabled ?? true,
-      allowManualSync: body.allowManualSync ?? true,
-      adminEmail
+      registrationEnabled: body.registrationEnabled ?? currentSettings.registrationEnabled,
+      allowManualSync: body.allowManualSync ?? currentSettings.allowManualSync,
+      adminEmail,
+      enabledProviderKeys
     }
   });
 
@@ -48,5 +54,10 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ settings });
+  return NextResponse.json({
+    settings: {
+      ...settings,
+      enabledProviderKeys
+    }
+  });
 }

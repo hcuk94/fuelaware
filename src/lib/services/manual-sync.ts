@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { dataSources } from "@/lib/data-sources";
+import { getDataSourcesByKeys } from "@/lib/data-sources";
 import { ingestLatestSnapshots } from "./ingest";
+import { getSettings } from "./settings";
 
 type ManualSyncSummaryItem = {
   source: string;
@@ -106,11 +107,27 @@ async function runManualSync() {
     finishedAt: null
   });
 
-  const totalSources = Math.max(1, dataSources.length);
+  const settings = await getSettings();
+  const enabledSources = getDataSourcesByKeys(settings.enabledProviderKeys);
+
+  if (enabledSources.length === 0) {
+    await updateManualSyncState({
+      status: "SUCCEEDED",
+      progress: 100,
+      message: "Manual sync complete. No providers are enabled.",
+      summary: [],
+      startedAt,
+      finishedAt: new Date()
+    });
+    return;
+  }
+
+  const totalSources = enabledSources.length;
   const sourceWeight = 100 / totalSources;
 
   try {
     const summary = await ingestLatestSnapshots(prisma, {
+      sources: enabledSources,
       onProgress: async (progress) => {
         if (progress.phase === "fetching") {
           await updateManualSyncState({

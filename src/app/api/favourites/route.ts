@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSettings } from "@/lib/services/settings";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -11,6 +12,20 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as { stationId?: string };
   if (!body.stationId) {
     return NextResponse.json({ error: "stationId is required" }, { status: 400 });
+  }
+
+  const settings = await getSettings();
+  const station = await prisma.station.findFirst({
+    where: {
+      id: body.stationId,
+      sourceKey: {
+        in: settings.enabledProviderKeys
+      }
+    }
+  });
+
+  if (!station) {
+    return NextResponse.json({ error: "Station unavailable" }, { status: 404 });
   }
 
   const favourite = await prisma.favourite.upsert({

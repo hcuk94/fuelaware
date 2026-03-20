@@ -67,4 +67,35 @@ describe("fetchWithEnvProxy", () => {
       next: { revalidate: 0 }
     });
   });
+
+  it("retries without a proxy dispatcher when HTTP tunneling fails", async () => {
+    process.env = {
+      ...originalEnv,
+      HTTP_PROXY: "http://proxy.example:8080",
+      HTTPS_PROXY: "",
+      NO_PROXY: ""
+    };
+    global.fetch = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new TypeError("fetch failed", {
+          cause: new Error("Proxy response (500) !== 200 when HTTP Tunneling")
+        })
+      )
+      .mockResolvedValueOnce({ ok: true }) as typeof fetch;
+
+    await fetchWithEnvProxy("https://example.test/feed", { next: { revalidate: 0 } });
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      "https://example.test/feed",
+      expect.objectContaining({
+        next: { revalidate: 0 },
+        dispatcher: expect.anything()
+      })
+    );
+    expect(global.fetch).toHaveBeenNthCalledWith(2, "https://example.test/feed", {
+      next: { revalidate: 0 }
+    });
+  });
 });

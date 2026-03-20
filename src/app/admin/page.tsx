@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AdminPanel } from "@/components/admin-panel";
 import { auth } from "@/lib/auth";
+import { providerCatalog } from "@/lib/data-sources";
 import { getManualSyncState } from "@/lib/services/manual-sync";
 import { getSettings } from "@/lib/services/settings";
 
@@ -22,7 +23,7 @@ export default async function AdminPage() {
           <p>FuelAware is intended for open source deployments where operators decide whether self-registration is enabled.</p>
         </div>
       </section>
-      <AdminPanel settings={settings} initialManualSync={manualSync} />
+      <AdminPanel settings={settings} initialManualSync={manualSync} providerOptions={providerCatalog} />
     </main>
   );
 }

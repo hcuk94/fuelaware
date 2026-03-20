@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/price-chart";
 import { prisma } from "@/lib/prisma";
+import { getSettings } from "@/lib/services/settings";
 import { formatDate, formatPrice } from "@/lib/utils/format";
 
 type StationSnapshot = {
@@ -29,8 +30,14 @@ type StationRecord = {
 
 export default async function StationPage({ params }: { params: Promise<{ stationId: string }> }) {
   const { stationId } = await params;
-  const station = await prisma.station.findUnique({
-    where: { id: stationId },
+  const settings = await getSettings();
+  const station = await prisma.station.findFirst({
+    where: {
+      id: stationId,
+      sourceKey: {
+        in: settings.enabledProviderKeys
+      }
+    },
     include: {
       products: {
         include: {

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { distanceKm } from "@/lib/utils/distance";
+import { getSettings } from "./settings";
 
 type SearchOptions = {
   q?: string;
@@ -35,17 +36,23 @@ type SearchResult = SearchStation & {
 
 export async function searchStations(options: SearchOptions) {
   const limit = options.limit ?? 20;
-  const where = options.q
-    ? {
-        OR: [
-          { name: { contains: options.q } },
-          { city: { contains: options.q } },
-          { postcode: { contains: options.q } },
-          { addressLine1: { contains: options.q } },
-          { brand: { contains: options.q } }
-        ]
-      }
-    : {};
+  const settings = await getSettings();
+  const where = {
+    sourceKey: {
+      in: settings.enabledProviderKeys
+    },
+    ...(options.q
+      ? {
+          OR: [
+            { name: { contains: options.q } },
+            { city: { contains: options.q } },
+            { postcode: { contains: options.q } },
+            { addressLine1: { contains: options.q } },
+            { brand: { contains: options.q } }
+          ]
+        }
+      : {})
+  };
 
   const stations = await prisma.station.findMany({
     where,

@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import { PrismaClient } from "@prisma/client";
 import { dataSources } from "@/lib/data-sources";
+import type { FuelDataSource } from "@/lib/data-sources/types";
 import { prisma as sharedPrisma } from "@/lib/prisma";
 import { evaluateAlertsForProduct } from "./alerts";
 
@@ -30,6 +31,7 @@ type IngestProgress =
     };
 
 type IngestOptions = {
+  sources?: FuelDataSource[];
   onProgress?: (progress: IngestProgress) => Promise<void> | void;
 };
 
@@ -43,9 +45,10 @@ function normalizeMetadata(metadata?: Record<string, unknown>) {
 
 export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma, options: IngestOptions = {}) {
   const summaries: IngestSummary[] = [];
-  const totalSources = dataSources.length;
+  const sources = options.sources ?? dataSources;
+  const totalSources = sources.length;
 
-  for (const [sourceIndex, source] of dataSources.entries()) {
+  for (const [sourceIndex, source] of sources.entries()) {
     await options.onProgress?.({
       phase: "fetching",
       source: source.label,

@@ -12,6 +12,12 @@ vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock
 }));
 
+vi.mock("./settings", () => ({
+  getSettings: vi.fn(async () => ({
+    enabledProviderKeys: ["uk-gov"]
+  }))
+}));
+
 describe("searchStations", () => {
   afterEach(() => {
     prismaMock.station.findMany.mockReset();
@@ -56,6 +62,7 @@ describe("searchStations", () => {
     expect(prismaMock.station.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
+          sourceKey: { in: ["uk-gov"] },
           OR: expect.arrayContaining([expect.objectContaining({ name: { contains: "London" } })])
         })
       })

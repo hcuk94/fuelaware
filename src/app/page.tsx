@@ -8,13 +8,33 @@ import { getSettings } from "@/lib/services/settings";
 export default async function HomePage() {
   const session = await auth();
   const settings = await getSettings();
-  const stationCount = await prisma.station.count();
-  const productCount = await prisma.fuelProduct.count();
-  const latestSnapshots = await prisma.priceSnapshot.count();
+  const enabledStationFilter = {
+    sourceKey: {
+      in: settings.enabledProviderKeys
+    }
+  };
+  const stationCount = await prisma.station.count({
+    where: enabledStationFilter
+  });
+  const productCount = await prisma.fuelProduct.count({
+    where: {
+      station: enabledStationFilter
+    }
+  });
+  const latestSnapshots = await prisma.priceSnapshot.count({
+    where: {
+      fuelProduct: {
+        station: enabledStationFilter
+      }
+    }
+  });
 
   const favourites = session?.user
     ? await prisma.favourite.findMany({
-        where: { userId: session.user.id },
+        where: {
+          userId: session.user.id,
+          station: enabledStationFilter
+        },
         include: {
           station: {
             include: {

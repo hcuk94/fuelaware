@@ -59,6 +59,7 @@ model AppSettings {
   registrationEnabled Boolean  @default(true)
   allowManualSync     Boolean  @default(true)
   adminEmail          String?
+  enabledProviderKeys Json?
   manualSyncStatus    String   @default("IDLE")
   manualSyncProgress  Float    @default(0)
   manualSyncMessage   String?

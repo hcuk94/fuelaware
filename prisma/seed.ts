@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { providerCatalog } from "../src/lib/data-sources";
 import { ingestLatestSnapshots } from "../src/lib/services/ingest";
 import { createPrismaClient } from "../src/lib/prisma-client";
 
@@ -19,13 +20,15 @@ async function main() {
     where: { id: "singleton" },
     update: {
       adminEmail,
-      registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true"
+      registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
+      enabledProviderKeys: providerCatalog.map((provider) => provider.key)
     },
     create: {
       id: "singleton",
       adminEmail,
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
-      allowManualSync: true
+      allowManualSync: true,
+      enabledProviderKeys: providerCatalog.map((provider) => provider.key)
     }
   });
 

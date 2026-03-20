@@ -38,8 +38,39 @@ function getProxyDispatcher() {
   return cachedDispatcher;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return [error.message, getErrorMessage((error as Error & { cause?: unknown }).cause)].filter(Boolean).join(" ");
+  }
+
+  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return "";
+}
+
+function isLikelyProxyTunnelFailure(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  return (
+    message.includes("proxy response") ||
+    message.includes("http tunneling") ||
+    message.includes("tunnel") ||
+    message.includes("und_err_aborted")
+  );
+}
+
 export async function fetchWithEnvProxy(input: string | URL | Request, init: ProxyAwareRequestInit = {}) {
   const dispatcher = getProxyDispatcher();
   const requestInit = dispatcher ? { ...init, dispatcher } : init;
-  return fetch(input, requestInit as RequestInit);
+
+  try {
+    return await fetch(input, requestInit as RequestInit);
+  } catch (error) {
+    if (!dispatcher || !isLikelyProxyTunnelFailure(error)) {
+      throw error;
+    }
+
+    return fetch(input, init as RequestInit);
+  }
 }
