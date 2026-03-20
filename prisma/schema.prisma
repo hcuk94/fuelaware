@@ -59,6 +59,12 @@ model AppSettings {
   registrationEnabled Boolean  @default(true)
   allowManualSync     Boolean  @default(true)
   adminEmail          String?
+  manualSyncStatus    String   @default("IDLE")
+  manualSyncProgress  Float    @default(0)
+  manualSyncMessage   String?
+  manualSyncSummary   Json?
+  manualSyncStartedAt DateTime?
+  manualSyncFinishedAt DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

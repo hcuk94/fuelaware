@@ -4,6 +4,35 @@ import { dataSources } from "@/lib/data-sources";
 import { prisma as sharedPrisma } from "@/lib/prisma";
 import { evaluateAlertsForProduct } from "./alerts";
 
+type IngestSummary = { source: string; stations: number; products: number };
+
+type IngestProgress =
+  | {
+      phase: "fetching";
+      source: string;
+      sourceIndex: number;
+      totalSources: number;
+    }
+  | {
+      phase: "processing";
+      source: string;
+      sourceIndex: number;
+      totalSources: number;
+      stationIndex: number;
+      stationCount: number;
+    }
+  | {
+      phase: "completed-source";
+      source: string;
+      sourceIndex: number;
+      totalSources: number;
+      summary: IngestSummary;
+    };
+
+type IngestOptions = {
+  onProgress?: (progress: IngestProgress) => Promise<void> | void;
+};
+
 function normalizeMetadata(metadata?: Record<string, unknown>) {
   if (!metadata) {
     return undefined;
@@ -12,14 +41,29 @@ function normalizeMetadata(metadata?: Record<string, unknown>) {
   return JSON.parse(JSON.stringify(metadata));
 }
 
-export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma) {
-  const summaries: Array<{ source: string; stations: number; products: number }> = [];
+export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma, options: IngestOptions = {}) {
+  const summaries: IngestSummary[] = [];
+  const totalSources = dataSources.length;
 
-  for (const source of dataSources) {
+  for (const [sourceIndex, source] of dataSources.entries()) {
+    await options.onProgress?.({
+      phase: "fetching",
+      source: source.label,
+      sourceIndex,
+      totalSources
+    });
     const stations = await source.fetchStations();
     let productCount = 0;
 
-    for (const station of stations) {
+    for (const [stationIndex, station] of stations.entries()) {
+      await options.onProgress?.({
+        phase: "processing",
+        source: source.label,
+        sourceIndex,
+        totalSources,
+        stationIndex,
+        stationCount: stations.length
+      });
       const storedStation = await client.station.upsert({
         where: {
           sourceKey_externalId: {
@@ -102,10 +146,19 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
       }
     }
 
-    summaries.push({
+    const summary = {
       source: source.label,
       stations: stations.length,
       products: productCount
+    };
+
+    summaries.push(summary);
+    await options.onProgress?.({
+      phase: "completed-source",
+      source: source.label,
+      sourceIndex,
+      totalSources,
+      summary
     });
   }
 

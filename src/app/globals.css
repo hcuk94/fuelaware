@@ -237,13 +237,57 @@ button,
   width: auto;
 }
 
+.sync-state {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.sync-state-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sync-state h3,
+.sync-state p {
+  margin: 0;
+}
+
+.sync-progress {
+  overflow: hidden;
+  height: 0.8rem;
+  border-radius: 999px;
+  background: rgba(35, 22, 15, 0.08);
+}
+
+.sync-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #edb45b);
+  transition: width 0.6s ease;
+}
+
+.sync-state-success {
+  border-color: rgba(52, 120, 86, 0.2);
+}
+
+.sync-state-error {
+  border-color: rgba(157, 66, 28, 0.28);
+}
+
 @media (max-width: 800px) {
   .site-header,
   .hero,
   .search-row,
   .section-heading,
   .result-header,
-  .actions {
+  .actions,
+  .sync-state-header {
     flex-direction: column;
     align-items: stretch;
   }

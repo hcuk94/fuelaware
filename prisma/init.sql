@@ -55,6 +55,12 @@ CREATE TABLE IF NOT EXISTS "AppSettings" (
   "registrationEnabled" BOOLEAN NOT NULL DEFAULT true,
   "allowManualSync" BOOLEAN NOT NULL DEFAULT true,
   "adminEmail" TEXT,
+  "manualSyncStatus" TEXT NOT NULL DEFAULT 'IDLE',
+  "manualSyncProgress" REAL NOT NULL DEFAULT 0,
+  "manualSyncMessage" TEXT,
+  "manualSyncSummary" TEXT,
+  "manualSyncStartedAt" DATETIME,
+  "manualSyncFinishedAt" DATETIME,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" DATETIME NOT NULL
 );
