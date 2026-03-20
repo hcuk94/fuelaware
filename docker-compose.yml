@@ -1,6 +1,6 @@
 services:
   fuelaware:
-    image: ${FUELAWARE_IMAGE:-ghcr.io/your-org-or-user/fuelaware:latest}
+    image: ${FUELAWARE_IMAGE:-ghcr.io/hcuk94/fuelaware:latest}
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
