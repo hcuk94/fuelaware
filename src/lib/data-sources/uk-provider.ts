@@ -4,6 +4,7 @@ import { fetchWithEnvProxy } from "@/lib/fetch-with-env-proxy";
 
 type UkApiRecord = {
   id?: string;
+  node_id?: string;
   site_id?: string;
   forecourt_id?: string;
   station_id?: string;
@@ -11,6 +12,8 @@ type UkApiRecord = {
   site_name?: string;
   name?: string;
   brand?: string;
+  brand_name?: string;
+  trading_name?: string;
   operator?: string;
   address?: string;
   address_line_1?: string;
@@ -18,6 +21,11 @@ type UkApiRecord = {
   town?: string;
   city?: string;
   postcode?: string;
+  location?: {
+    latitude?: number | string;
+    longitude?: number | string;
+    postcode?: string;
+  };
   lat?: number | string;
   latitude?: number | string;
   lon?: number | string;
@@ -29,9 +37,17 @@ type UkApiRecord = {
   price?: number | string;
   unit?: string;
   currency?: string;
+  fuel_prices?: Array<{
+    fuel_type?: string;
+    price?: number | string;
+    price_last_updated?: string;
+  }>;
   last_updated?: string;
   updated_at?: string;
   observed_at?: string;
+  price_last_updated?: string;
+  temporary_closure?: boolean;
+  permanent_closure?: boolean;
   forecourt?: UkApiRecord;
   station?: UkApiRecord;
   site?: UkApiRecord;
@@ -144,7 +160,13 @@ function getTokenUrl() {
 }
 
 function getObservedAt(record: UkApiRecord) {
-  return new Date(record.last_updated ?? record.updated_at ?? record.observed_at ?? Date.now());
+  return new Date(
+    record.last_updated ??
+      record.updated_at ??
+      record.observed_at ??
+      record.price_last_updated ??
+      Date.now()
+  );
 }
 
 function getRecordContainer(record: UkApiRecord) {
@@ -206,6 +228,7 @@ async function fetchAllRecords(url: string, accessToken: string | undefined) {
 function getStationIdentity(record: UkApiRecord) {
   const container = getRecordContainer(record);
   return (
+    asString(container.node_id) ??
     asString(container.forecourt_id) ??
     asString(container.site_id) ??
     asString(container.station_id) ??
@@ -216,12 +239,18 @@ function getStationIdentity(record: UkApiRecord) {
 
 function buildStationSeed(record: UkApiRecord) {
   const container = getRecordContainer(record);
+  if (container.temporary_closure || container.permanent_closure) {
+    return undefined;
+  }
+
   const latitude =
+    asNumber(container.location?.latitude) ??
     asNumber(container.lat) ??
     asNumber(container.latitude) ??
     asNumber(container.lng) ??
     asNumber(container.longitude);
   const longitude =
+    asNumber(container.location?.longitude) ??
     asNumber(container.lon) ??
     asNumber(container.longitude) ??
     asNumber(container.lng) ??
@@ -234,16 +263,22 @@ function buildStationSeed(record: UkApiRecord) {
   const station: NormalizedStation = {
     sourceKey: "uk-gov",
     externalId: getStationIdentity(record),
-    name: asString(container.site_name) ?? asString(container.forecourt_name) ?? asString(container.name) ?? "Unnamed UK station",
+    name:
+      asString(container.trading_name) ??
+      asString(container.site_name) ??
+      asString(container.forecourt_name) ??
+      asString(container.name) ??
+      asString(container.brand_name) ??
+      "Unnamed UK station",
     type: SiteType.STATION,
     countryCode: "GB",
     addressLine1:
       asString(container.address) ?? asString(container.address_line_1) ?? asString(container.line_1),
     city: asString(container.town) ?? asString(container.city),
-    postcode: asString(container.postcode),
+    postcode: asString(container.location?.postcode) ?? asString(container.postcode),
     latitude,
     longitude,
-    brand: asString(container.brand),
+    brand: asString(container.brand_name) ?? asString(container.brand),
     operatorName: asString(container.operator),
     products: []
   };
@@ -252,14 +287,40 @@ function buildStationSeed(record: UkApiRecord) {
 }
 
 function extractProducts(record: UkApiRecord) {
+  if (Array.isArray(record.fuel_prices)) {
+    return record.fuel_prices
+      .map((fuel) => {
+        const productCode = asString(fuel.fuel_type);
+        const rawPrice = asNumber(fuel.price);
+        if (!productCode || rawPrice === undefined) {
+          return undefined;
+        }
+
+        const price = rawPrice > 10 ? rawPrice / 100 : rawPrice;
+
+        return {
+          productCode,
+          displayName: productCode.toUpperCase(),
+          category: categoryFromCode(productCode),
+          unit: "L",
+          currency: "GBP",
+          price,
+          observedAt: new Date(fuel.price_last_updated ?? record.observed_at ?? Date.now())
+        };
+      })
+      .filter((product): product is NonNullable<typeof product> => Boolean(product));
+  }
+
   if (record.prices && typeof record.prices === "object") {
     const observedAt = getObservedAt(record);
     return Object.entries(record.prices)
       .map(([productCode, value]) => {
-        const price = asNumber(value);
-        if (price === undefined) {
+        const rawPrice = asNumber(value);
+        if (rawPrice === undefined) {
           return undefined;
         }
+
+        const price = rawPrice > 10 ? rawPrice / 100 : rawPrice;
 
         return {
           productCode,
@@ -275,10 +336,12 @@ function extractProducts(record: UkApiRecord) {
   }
 
   const productCode = asString(record.fuel_type) ?? asString(record.product_code);
-  const price = asNumber(record.price);
-  if (!productCode || price === undefined) {
+  const rawPrice = asNumber(record.price);
+  if (!productCode || rawPrice === undefined) {
     return [];
   }
+
+  const price = rawPrice > 10 ? rawPrice / 100 : rawPrice;
 
   return [
     {
@@ -371,14 +434,13 @@ export class UkFuelProvider implements FuelDataSource {
       }
 
       for (const record of fuelPriceRecords) {
-        const station = buildStationSeed(record);
-        if (!station) {
+        const stationId = getStationIdentity(record);
+        const existingStation = stationsById.get(stationId);
+        if (!existingStation) {
           continue;
         }
 
-        const existingStation = stationsById.get(station.externalId) ?? station;
         const products = extractProducts(record);
-
         existingStation.products.push(...products);
         stationsById.set(existingStation.externalId, existingStation);
       }

@@ -20,11 +20,14 @@ describe("UkFuelProvider", () => {
         json: async () => ({
           data: [
             {
-              site_id: "default-url-1",
-              site_name: "Default URL Court",
-              town: "Bristol",
-              lat: 51.45,
-              lon: -2.58
+              node_id: "default-url-1",
+              trading_name: "Default URL Court",
+              city: "Bristol",
+              location: {
+                postcode: "BS1 4QA",
+                latitude: 51.45,
+                longitude: -2.58
+              }
             }
           ]
         })
@@ -34,17 +37,14 @@ describe("UkFuelProvider", () => {
         json: async () => ({
           data: [
             {
-              site_id: "default-url-1",
-              fuel_type: "e10",
-              price: 1.49,
-              observed_at: "2026-03-20T10:00:00Z",
-              site: {
-                site_id: "default-url-1",
-                site_name: "Default URL Court",
-                town: "Bristol",
-                lat: 51.45,
-                lon: -2.58
-              }
+              node_id: "default-url-1",
+              fuel_prices: [
+                {
+                  fuel_type: "e10",
+                  price: 149.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                }
+              ]
             }
           ]
         })
@@ -96,14 +96,16 @@ describe("UkFuelProvider", () => {
         json: async () => ({
           data: [
             {
-              site_id: "demo-1",
-              site_name: "Demo Court",
-              brand: "DemoFuel",
+              node_id: "demo-1",
+              trading_name: "Demo Court",
+              brand_name: "DemoFuel",
               address: "1 Demo Street",
-              town: "Leeds",
-              postcode: "LS1",
-              lat: 53.8,
-              lon: -1.54
+              city: "Leeds",
+              location: {
+                postcode: "LS1",
+                latitude: 53.8,
+                longitude: -1.54
+              }
             }
           ]
         })
@@ -113,36 +115,19 @@ describe("UkFuelProvider", () => {
         json: async () => ({
           data: [
             {
-              site_id: "demo-1",
-              fuel_type: "e10",
-              price: 1.52,
-              observed_at: "2026-03-20T10:00:00Z",
-              site: {
-                site_id: "demo-1",
-                site_name: "Demo Court",
-                brand: "DemoFuel",
-                address: "1 Demo Street",
-                town: "Leeds",
-                postcode: "LS1",
-                lat: 53.8,
-                lon: -1.54
-              }
-            },
-            {
-              site_id: "demo-1",
-              fuel_type: "b7",
-              price: 1.61,
-              observed_at: "2026-03-20T10:00:00Z",
-              site: {
-                site_id: "demo-1",
-                site_name: "Demo Court",
-                brand: "DemoFuel",
-                address: "1 Demo Street",
-                town: "Leeds",
-                postcode: "LS1",
-                lat: 53.8,
-                lon: -1.54
-              }
+              node_id: "demo-1",
+              fuel_prices: [
+                {
+                  fuel_type: "e10",
+                  price: 152.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                },
+                {
+                  fuel_type: "b7",
+                  price: 161.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                }
+              ]
             }
           ]
         })
@@ -191,12 +176,13 @@ describe("UkFuelProvider", () => {
       sourceKey: "uk-gov",
       externalId: "demo-1",
       city: "Leeds",
-      countryCode: "GB"
+      countryCode: "GB",
+      brand: "DemoFuel"
     });
     expect(stations[0].products).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ productCode: "e10", category: FuelCategory.PETROL }),
-        expect.objectContaining({ productCode: "b7", category: FuelCategory.DIESEL })
+        expect.objectContaining({ productCode: "e10", category: FuelCategory.PETROL, price: 1.52 }),
+        expect.objectContaining({ productCode: "b7", category: FuelCategory.DIESEL, price: 1.61 })
       ])
     );
   });
@@ -210,14 +196,15 @@ describe("UkFuelProvider", () => {
         json: async () => ({
           results: [
             {
-              forecourt_id: "gb-123",
-              name: "City Forecourt",
-              address: "10 High Street",
+              node_id: "gb-123",
+              trading_name: "City Forecourt",
               city: "York",
-              postcode: "YO1 1AA",
-              latitude: 53.96,
-              longitude: -1.08,
-              brand: "Fuel Finder"
+              brand_name: "Fuel Finder",
+              location: {
+                postcode: "YO1 1AA",
+                latitude: 53.96,
+                longitude: -1.08
+              }
             }
           ]
         })
@@ -227,35 +214,29 @@ describe("UkFuelProvider", () => {
         json: async () => ({
           results: [
             {
-              forecourt_id: "gb-123",
-              fuel_type: "e10",
-              price: 1.48,
-              observed_at: "2026-03-20T10:00:00Z",
+              node_id: "gb-123",
+              fuel_prices: [
+                {
+                  fuel_type: "e10",
+                  price: 148.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                },
+                {
+                  fuel_type: "b7",
+                  price: 156.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                }
+              ],
               forecourt: {
-                forecourt_id: "gb-123",
-                name: "City Forecourt",
-                address: "10 High Street",
+                node_id: "gb-123",
+                trading_name: "City Forecourt",
                 city: "York",
-                postcode: "YO1 1AA",
-                latitude: 53.96,
-                longitude: -1.08,
-                brand: "Fuel Finder"
-              }
-            },
-            {
-              forecourt_id: "gb-123",
-              fuel_type: "b7",
-              price: 1.56,
-              observed_at: "2026-03-20T10:00:00Z",
-              forecourt: {
-                forecourt_id: "gb-123",
-                name: "City Forecourt",
-                address: "10 High Street",
-                city: "York",
-                postcode: "YO1 1AA",
-                latitude: 53.96,
-                longitude: -1.08,
-                brand: "Fuel Finder"
+                location: {
+                  postcode: "YO1 1AA",
+                  latitude: 53.96,
+                  longitude: -1.08
+                },
+                brand_name: "Fuel Finder"
               }
             }
           ]
@@ -273,8 +254,8 @@ describe("UkFuelProvider", () => {
     });
     expect(stations[0].products).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ productCode: "e10", category: FuelCategory.PETROL }),
-        expect.objectContaining({ productCode: "b7", category: FuelCategory.DIESEL })
+        expect.objectContaining({ productCode: "e10", category: FuelCategory.PETROL, price: 1.48 }),
+        expect.objectContaining({ productCode: "b7", category: FuelCategory.DIESEL, price: 1.56 })
       ])
     );
   });
