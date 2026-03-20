@@ -26,14 +26,34 @@ FuelAware is an open source web app for tracking fuel prices across multiple cou
 
 ## Quick start
 
-1. Copy `.env.example` to `.env` and set `NEXTAUTH_SECRET`.
-2. Install dependencies:
+1. Copy `.env.example` to `.env`.
+2. Set the auth variables:
+
+```bash
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="$(openssl rand -base64 32)"
+```
+
+`NEXTAUTH_URL` must be the full public base URL where users access FuelAware.
+
+- Local development: `http://localhost:3000`
+- Production behind your own domain: for example `https://fuelaware.example.com`
+
+`NEXTAUTH_SECRET` must be a long random string shared by all app instances for the same deployment. It is used to sign auth-related tokens and sessions. Generate it once and keep it stable; do not rotate it casually unless you are prepared for existing sessions and email links to stop working.
+
+If you do not have `openssl`, you can generate a suitable value with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+3. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Prepare the database:
+4. Prepare the database:
 
 ```bash
 npm run db:generate
@@ -41,7 +61,7 @@ npm run db:init
 npm run db:seed
 ```
 
-4. Start the app:
+5. Start the app:
 
 ```bash
 npm run dev
@@ -70,11 +90,9 @@ npm run typecheck
 
 Published images are tagged to:
 
-- On tagged releases:
 - `ghcr.io/<owner>/<repo>:<tag>`
 - `ghcr.io/<owner>/<repo>:latest`
 - `ghcr.io/<owner>/<repo>:git-<sha>`
-- On `main`:
 - `ghcr.io/<owner>/<repo>:unstable`
 - `ghcr.io/<owner>/<repo>:unstable-<sha>`
 
@@ -85,9 +103,19 @@ The included [`docker-compose.yml`](/Users/henry/proj/fuelaware/docker-compose.y
 Before starting it, set:
 
 - `FUELAWARE_IMAGE` to your published image, for example `ghcr.io/acme/fuelaware:latest` or `ghcr.io/acme/fuelaware:unstable`
-- `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL`
+- `NEXTAUTH_URL` to the exact external URL users will use to open the site, for example `https://fuelaware.example.com`
+- `NEXTAUTH_SECRET` to one stable random secret for that deployment, for example the output of `openssl rand -base64 32`
 - SMTP settings if you want real email delivery
+
+Example production `.env` values for Docker Compose:
+
+```bash
+FUELAWARE_IMAGE="ghcr.io/acme/fuelaware:latest"
+NEXTAUTH_URL="https://fuelaware.example.com"
+NEXTAUTH_SECRET="replace-this-with-a-generated-random-secret"
+ADMIN_EMAIL="admin@example.com"
+EMAIL_FROM="FuelAware <no-reply@fuelaware.example.com>"
+```
 
 Then run:
 
