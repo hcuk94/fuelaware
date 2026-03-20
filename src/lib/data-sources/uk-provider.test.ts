@@ -59,13 +59,13 @@ describe("UkFuelProvider", () => {
       })
     ]);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://www.fuel-finder.service.gov.uk/api/v1/pfs",
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs?batch-number=1",
       expect.objectContaining({
         next: { revalidate: 0 }
       })
     );
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://www.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices",
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices?batch-number=1",
       expect.objectContaining({
         next: { revalidate: 0 }
       })
@@ -170,7 +170,7 @@ describe("UkFuelProvider", () => {
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       2,
-      "https://www.fuel-finder.service.gov.uk/api/v1/pfs",
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs?batch-number=1",
       expect.objectContaining({
         headers: {
           Authorization: "Bearer access-token"
@@ -179,7 +179,7 @@ describe("UkFuelProvider", () => {
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       3,
-      "https://www.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices",
+      "https://www.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices?batch-number=1",
       expect.objectContaining({
         headers: {
           Authorization: "Bearer access-token"

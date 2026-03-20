@@ -171,22 +171,15 @@ function extractRecords(payload: unknown): UkApiRecord[] {
   return Array.isArray(collection) ? (collection as UkApiRecord[]) : [];
 }
 
-function getNextPage(payload: unknown): string | number | undefined {
-  const payloadRecord = asRecord(payload);
-  if (!payloadRecord) {
-    return undefined;
-  }
-
-  return asString(payloadRecord.next_page) ?? asString(payloadRecord.next) ?? asNumber(payloadRecord.next_page);
-}
-
 async function fetchAllRecords(url: string, accessToken: string | undefined) {
   const records: UkApiRecord[] = [];
-  let nextUrl: string | undefined = url;
-  let pageCount = 0;
+  let batchNumber = 1;
 
-  while (nextUrl) {
-    const response = await fetchWithEnvProxy(nextUrl, {
+  while (batchNumber <= 100) {
+    const batchUrl = new URL(url);
+    batchUrl.searchParams.set("batch-number", String(batchNumber));
+
+    const response = await fetchWithEnvProxy(batchUrl.toString(), {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       cache: "no-store",
       next: { revalidate: 0 }
@@ -197,22 +190,14 @@ async function fetchAllRecords(url: string, accessToken: string | undefined) {
     }
 
     const payload = await response.json();
-    records.push(...extractRecords(payload));
-    pageCount += 1;
+    const batchRecords = extractRecords(payload);
+    records.push(...batchRecords);
 
-    const nextPage = getNextPage(payload);
-    if (!nextPage || pageCount >= 100) {
+    if (batchRecords.length < 500) {
       break;
     }
 
-    if (typeof nextPage === "string" && /^https?:\/\//.test(nextPage)) {
-      nextUrl = nextPage;
-      continue;
-    }
-
-    const urlObject = new URL(url);
-    urlObject.searchParams.set("page", String(nextPage));
-    nextUrl = urlObject.toString();
+    batchNumber += 1;
   }
 
   return records;
