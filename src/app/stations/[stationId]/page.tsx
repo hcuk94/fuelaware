@@ -1,7 +1,18 @@
+import type { Prisma } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/price-chart";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatPrice } from "@/lib/utils/format";
+
+type StationPageStation = Prisma.StationGetPayload<{
+  include: {
+    products: {
+      include: {
+        snapshots: true;
+      };
+    };
+  };
+}>;
 
 export default async function StationPage({ params }: { params: Promise<{ stationId: string }> }) {
   const { stationId } = await params;
@@ -24,20 +35,22 @@ export default async function StationPage({ params }: { params: Promise<{ statio
     notFound();
   }
 
+  const typedStation: StationPageStation = station;
+
   return (
     <main className="main-grid">
       <section className="hero">
         <div className="hero-copy stack">
-          <span className="eyebrow">{station.countryCode}</span>
-          <h1>{station.name}</h1>
+          <span className="eyebrow">{typedStation.countryCode}</span>
+          <h1>{typedStation.name}</h1>
           <p>
-            {station.addressLine1 ? `${station.addressLine1}, ` : ""}
-            {station.city ?? ""} {station.postcode ?? ""}
+            {typedStation.addressLine1 ? `${typedStation.addressLine1}, ` : ""}
+            {typedStation.city ?? ""} {typedStation.postcode ?? ""}
           </p>
         </div>
       </section>
 
-      {station.products.map((product) => (
+      {typedStation.products.map((product: StationPageStation["products"][number]) => (
         <section key={product.id} className="card stack">
           <div className="section-heading">
             <div>
@@ -47,7 +60,7 @@ export default async function StationPage({ params }: { params: Promise<{ statio
             <span className="muted">Updated {formatDate(product.lastUpdatedAt)}</span>
           </div>
           <PriceChart
-            data={product.snapshots.map((snapshot) => ({
+            data={product.snapshots.map((snapshot: StationPageStation["products"][number]["snapshots"][number]) => ({
               observedAt: snapshot.observedAt.toISOString(),
               price: Number(snapshot.price)
             }))}
