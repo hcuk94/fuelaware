@@ -8,6 +8,10 @@ type FranceRecord = {
   ville?: string;
   code_postal?: string;
   cp?: string;
+  enseigne?: string;
+  brand?: string;
+  nom?: string;
+  name?: string;
   geom?: { lat?: number; lon?: number };
   latitude?: number | string;
   longitude?: number | string;
@@ -131,6 +135,23 @@ function getColumnPrices(record: FranceRecord): FrancePriceEntry[] {
   });
 }
 
+function getStationName(record: FranceRecord) {
+  const explicitName = record.enseigne ?? record.brand ?? record.nom ?? record.name;
+  if (explicitName?.trim()) {
+    return explicitName.trim();
+  }
+
+  if (record.adresse?.trim()) {
+    return record.ville?.trim() ? `${record.adresse.trim()}, ${record.ville.trim()}` : record.adresse.trim();
+  }
+
+  if (record.ville?.trim()) {
+    return `Station ${record.ville.trim()}`;
+  }
+
+  return "Station France";
+}
+
 export class FranceFuelProvider implements FuelDataSource {
   key = "fr-open-data";
   label = "France Prix des carburants";
@@ -177,7 +198,7 @@ export class FranceFuelProvider implements FuelDataSource {
           return {
             sourceKey: this.key,
             externalId: record.id != null ? String(record.id) : crypto.randomUUID(),
-            name: record.pop ? `Station ${record.pop}` : `Station ${record.ville ?? "France"}`,
+            name: getStationName(record),
             type: SiteType.STATION,
             countryCode: "FR",
             addressLine1: record.adresse,

@@ -92,6 +92,7 @@ describe("FranceFuelProvider", () => {
     expect(stations).toHaveLength(1);
     expect(stations[0]).toMatchObject({
       externalId: "35000022",
+      name: "254, ROUTE DE FOUGERES, Rennes",
       city: "Rennes",
       postcode: "35000",
       metadata: {
@@ -105,6 +106,30 @@ describe("FranceFuelProvider", () => {
         expect.objectContaining({ displayName: "E10", category: FuelCategory.PETROL, price: 1.939 })
       ])
     );
+  });
+
+  it("does not use the `pop` code as the station name", async () => {
+    process.env = { ...originalEnv, FRANCE_FUEL_API_URL: "https://example.test/fr" };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        results: [
+          {
+            id: "fr-123",
+            adresse: "10 Rue Exemple",
+            ville: "Paris",
+            pop: "R",
+            geom: { lat: 48.86, lon: 2.34 },
+            prix: [{ "@nom": "Gazole", "@valeur": 1.68, "@maj": "2026-03-20T10:00:00Z" }]
+          }
+        ]
+      })
+    }) as typeof fetch;
+
+    const provider = new FranceFuelProvider();
+    const stations = await provider.fetchStations();
+
+    expect(stations[0]?.name).toBe("10 Rue Exemple, Paris");
   });
 
   it("paginates through the France dataset until all pages are fetched", async () => {
