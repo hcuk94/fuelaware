@@ -65,11 +65,18 @@ npm run typecheck
 
 - `.github/workflows/ci.yml` runs type-checks, tests, Prisma client generation, and a production build on pushes and pull requests.
 - `.github/workflows/release-ghcr.yml` publishes tagged releases matching `v*` to GitHub Container Registry.
+- `.github/workflows/unstable-ghcr.yml` publishes an `unstable` image on every push to `main`.
+- `.github/dependabot.yml` keeps npm dependencies, GitHub Actions, and the Docker base image up to date.
 
 Published images are tagged to:
 
+- On tagged releases:
 - `ghcr.io/<owner>/<repo>:<tag>`
 - `ghcr.io/<owner>/<repo>:latest`
+- `ghcr.io/<owner>/<repo>:git-<sha>`
+- On `main`:
+- `ghcr.io/<owner>/<repo>:unstable`
+- `ghcr.io/<owner>/<repo>:unstable-<sha>`
 
 ## Docker Compose
 
@@ -77,7 +84,7 @@ The included [`docker-compose.yml`](/Users/henry/proj/fuelaware/docker-compose.y
 
 Before starting it, set:
 
-- `FUELAWARE_IMAGE` to your published image, for example `ghcr.io/acme/fuelaware:v0.1.0`
+- `FUELAWARE_IMAGE` to your published image, for example `ghcr.io/acme/fuelaware:latest` or `ghcr.io/acme/fuelaware:unstable`
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL`
 - SMTP settings if you want real email delivery

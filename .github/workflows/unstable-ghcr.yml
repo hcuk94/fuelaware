@@ -1,9 +1,9 @@
-name: Release Image
+name: Publish Unstable Image
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -35,9 +35,8 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=tag
-            type=raw,value=latest
-            type=sha,prefix=git-
+            type=raw,value=unstable
+            type=sha,prefix=unstable-
 
       - name: Build and push image
         uses: docker/build-push-action@v6
