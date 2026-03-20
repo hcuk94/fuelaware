@@ -6,6 +6,7 @@ import { getSettings } from "@/lib/services/settings";
 
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
+  trustHost: true,
   session: { strategy: "database" },
   pages: {
     signIn: "/"

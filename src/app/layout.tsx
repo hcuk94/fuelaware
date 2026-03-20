@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               </a>
               <nav className="nav-links">
                 <a href="/">Dashboard</a>
-                {session?.user.role === "ADMIN" ? <a href="/admin">Admin</a> : null}
+                {session?.user?.role === "ADMIN" ? <a href="/admin">Admin</a> : null}
               </nav>
             </header>
             {children}
