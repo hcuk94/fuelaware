@@ -1,8 +1,16 @@
 import Decimal from "decimal.js";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { dataSources } from "@/lib/data-sources";
 import { prisma as sharedPrisma } from "@/lib/prisma";
 import { evaluateAlertsForProduct } from "./alerts";
+
+function normalizeMetadata(metadata?: Record<string, unknown>) {
+  if (!metadata) {
+    return undefined;
+  }
+
+  return JSON.parse(JSON.stringify(metadata));
+}
 
 export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma) {
   const summaries: Array<{ source: string; stations: number; products: number }> = [];
@@ -30,7 +38,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
           longitude: station.longitude,
           brand: station.brand,
           operatorName: station.operatorName,
-          metadata: station.metadata as Prisma.InputJsonValue | undefined
+          metadata: normalizeMetadata(station.metadata)
         },
         create: {
           sourceKey: station.sourceKey,
@@ -45,7 +53,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
           longitude: station.longitude,
           brand: station.brand,
           operatorName: station.operatorName,
-          metadata: station.metadata as Prisma.InputJsonValue | undefined
+          metadata: normalizeMetadata(station.metadata)
         }
       });
 
@@ -65,7 +73,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
             currency: product.currency,
             lastPrice: new Decimal(product.price),
             lastUpdatedAt: product.observedAt,
-            metadata: product.metadata as Prisma.InputJsonValue | undefined
+            metadata: normalizeMetadata(product.metadata)
           },
           create: {
             stationId: storedStation.id,
@@ -76,7 +84,7 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma)
             currency: product.currency,
             lastPrice: new Decimal(product.price),
             lastUpdatedAt: product.observedAt,
-            metadata: product.metadata as Prisma.InputJsonValue | undefined
+            metadata: normalizeMetadata(product.metadata)
           }
         });
 
