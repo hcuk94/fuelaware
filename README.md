@@ -123,10 +123,73 @@ Then run:
 docker compose up -d
 ```
 
-## Notes on data sources
+## Data provider setup
 
-- UK: the provider is designed for the current UK government Fuel Finder / legacy open-data inputs, with a mock fallback for local development.
-- France: the provider targets the official French instant fuel-price dataset and also falls back to bundled sample data during development.
+FuelAware ships with two country integrations:
+
+- UK via `UK_FUEL_API_URL` and optional `UK_FUEL_API_KEY`
+- France via `FRANCE_FUEL_API_URL`
+
+All provider settings are environment variables, so the setup is the same whether you run the app locally, in Docker Compose, or in another container platform.
+
+### 1. Configure the UK provider
+
+The UK integration does not have a built-in default URL. You must point it at the UK feed you want FuelAware to read.
+
+Set:
+
+```bash
+UK_FUEL_API_URL="https://your-uk-provider.example/api/fuel"
+UK_FUEL_API_KEY=""
+```
+
+Notes:
+
+- `UK_FUEL_API_URL` is required for live UK data. If you leave it empty, FuelAware falls back to bundled UK sample data.
+- `UK_FUEL_API_KEY` is optional. If you set it, FuelAware sends it as a bearer token in the `Authorization` header.
+- The UK endpoint should return JSON with either a `stations` array or a `data` array.
+- Each station record should include coordinates and a `prices` object so FuelAware can normalize the station and fuel products.
+
+### 2. Configure the France provider
+
+The France integration already defaults to the public French instant fuel-price dataset, so in most cases you do not need to change anything.
+
+Default:
+
+```bash
+FRANCE_FUEL_API_URL="https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100"
+```
+
+Notes:
+
+- Leave `FRANCE_FUEL_API_URL` as-is to use the public French dataset.
+- Override it only if you want to use a different mirror, gateway, or pre-filtered endpoint.
+- If the France fetch fails, FuelAware falls back to bundled France sample data.
+- The France endpoint should return JSON with either a `results` array or a `records` array.
+
+### 3. Example `.env`
+
+For a deployment with both providers enabled:
+
+```bash
+UK_FUEL_API_URL="https://your-uk-provider.example/api/fuel"
+UK_FUEL_API_KEY="replace-if-your-uk-feed-needs-auth"
+FRANCE_FUEL_API_URL="https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100"
+```
+
+For Docker Compose, add the same values to the `.env` file that `docker compose` reads before you start the stack.
+
+### 4. Verify the integrations after startup
+
+1. Start FuelAware.
+2. Sign in as the admin user.
+3. Open the admin page.
+4. Enable `Allow manual sync` and save.
+5. Click `Run sync`.
+
+If the sync succeeds, the admin UI reports a summary such as the provider name and the number of stations ingested.
+
+If one provider is misconfigured or unavailable, FuelAware logs a warning and uses that country's bundled sample data instead. This is useful for development, but for production you should treat fallback data as a sign that the provider configuration or upstream service needs attention.
 
 Because upstream schemas and access methods can change, providers are isolated in `src/lib/data-sources` so country integrations can evolve independently from the rest of the app.
 
