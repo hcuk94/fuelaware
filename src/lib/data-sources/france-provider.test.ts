@@ -92,7 +92,7 @@ describe("FranceFuelProvider", () => {
     expect(stations).toHaveLength(1);
     expect(stations[0]).toMatchObject({
       externalId: "35000022",
-      name: "254, ROUTE DE FOUGERES, Rennes",
+      name: "254, ROUTE DE FOUGERES",
       city: "Rennes",
       postcode: "35000",
       metadata: {
@@ -129,7 +129,7 @@ describe("FranceFuelProvider", () => {
     const provider = new FranceFuelProvider();
     const stations = await provider.fetchStations();
 
-    expect(stations[0]?.name).toBe("10 Rue Exemple, Paris");
+    expect(stations[0]?.name).toBe("10 Rue Exemple");
   });
 
   it("paginates through the France dataset until all pages are fetched", async () => {

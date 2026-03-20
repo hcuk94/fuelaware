@@ -142,7 +142,7 @@ function getStationName(record: FranceRecord) {
   }
 
   if (record.adresse?.trim()) {
-    return record.ville?.trim() ? `${record.adresse.trim()}, ${record.ville.trim()}` : record.adresse.trim();
+    return record.adresse.trim();
   }
 
   if (record.ville?.trim()) {
