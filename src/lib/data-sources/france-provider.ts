@@ -1,5 +1,6 @@
 import { mockStations } from "./mock-data";
 import { FuelCategory, SiteType, type FuelDataSource, type NormalizedStation } from "./types";
+import { fetchWithEnvProxy } from "@/lib/fetch-with-env-proxy";
 
 type FranceRecord = {
   id?: string;
@@ -74,7 +75,7 @@ export class FranceFuelProvider implements FuelDataSource {
       "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100";
 
     try {
-      const response = await fetch(url, { next: { revalidate: 0 } });
+      const response = await fetchWithEnvProxy(url, { next: { revalidate: 0 } });
       if (!response.ok) {
         throw new Error(`France provider failed with ${response.status}`);
       }

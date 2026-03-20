@@ -1,5 +1,6 @@
 import { mockStations } from "./mock-data";
 import { FuelCategory, SiteType, type FuelDataSource, type NormalizedStation } from "./types";
+import { fetchWithEnvProxy } from "@/lib/fetch-with-env-proxy";
 
 type UkApiRecord = {
   site_id?: string;
@@ -33,7 +34,7 @@ export class UkFuelProvider implements FuelDataSource {
     }
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithEnvProxy(url, {
         headers: process.env.UK_FUEL_API_KEY
           ? { Authorization: `Bearer ${process.env.UK_FUEL_API_KEY}` }
           : undefined,

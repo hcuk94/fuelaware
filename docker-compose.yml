@@ -25,6 +25,9 @@ services:
       UK_FUEL_API_URL: ${UK_FUEL_API_URL:-}
       UK_FUEL_API_KEY: ${UK_FUEL_API_KEY:-}
       FRANCE_FUEL_API_URL: ${FRANCE_FUEL_API_URL:-https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=100}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-}
     volumes:
       - fuelaware-data:/app/data
     healthcheck:

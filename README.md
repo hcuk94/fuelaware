@@ -179,6 +179,14 @@ FRANCE_FUEL_API_URL="https://data.economie.gouv.fr/api/explore/v2.1/catalog/data
 
 For Docker Compose, add the same values to the `.env` file that `docker compose` reads before you start the stack.
 
+If your deployment must reach provider APIs through an outbound proxy, FuelAware also respects standard proxy environment variables for provider fetches:
+
+```bash
+HTTP_PROXY="http://proxy.example:8080"
+HTTPS_PROXY="http://proxy.example:8080"
+NO_PROXY="localhost,127.0.0.1"
+```
+
 ### 4. Verify the integrations after startup
 
 1. Start FuelAware.
