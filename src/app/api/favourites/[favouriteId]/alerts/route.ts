@@ -27,10 +27,25 @@ export async function POST(
     lowestLookbackDays?: number;
   };
 
+  if (!body.fuelProductId) {
+    return NextResponse.json({ error: "fuelProductId is required" }, { status: 400 });
+  }
+
+  const fuelProduct = await prisma.fuelProduct.findFirst({
+    where: {
+      id: body.fuelProductId,
+      stationId: favourite.stationId
+    }
+  });
+
+  if (!fuelProduct) {
+    return NextResponse.json({ error: "Fuel product not found for this favourite" }, { status: 400 });
+  }
+
   const alert = await prisma.alertRule.create({
     data: {
       favouriteId,
-      fuelProductId: body.fuelProductId,
+      fuelProductId: fuelProduct.id,
       thresholdPrice: body.thresholdPrice ? new Decimal(body.thresholdPrice) : null,
       lowestLookbackDays: body.lowestLookbackDays ?? null
     }

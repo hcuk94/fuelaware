@@ -44,6 +44,14 @@ export default async function HomePage() {
             }
           },
           alerts: {
+            include: {
+              fuelProduct: {
+                select: {
+                  id: true,
+                  displayName: true
+                }
+              }
+            },
             orderBy: { createdAt: "desc" }
           }
         },

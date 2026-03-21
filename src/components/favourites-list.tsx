@@ -35,8 +35,20 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
   const router = useRouter();
   const [savingFor, setSavingFor] = useState<string | null>(null);
   const [thresholds, setThresholds] = useState<Record<string, string>>({});
+  const [selectedProducts, setSelectedProducts] = useState<Record<string, string>>(
+    Object.fromEntries(
+      favourites
+        .filter((favourite) => favourite.station.products.length > 0)
+        .map((favourite) => [favourite.id, favourite.station.products[0].id])
+    )
+  );
 
-  async function createThresholdAlert(favouriteId: string, fuelProductId: string) {
+  async function createThresholdAlert(favouriteId: string) {
+    const fuelProductId = selectedProducts[favouriteId];
+    if (!fuelProductId) {
+      return;
+    }
+
     setSavingFor(favouriteId);
     await fetch(`/api/favourites/${favouriteId}/alerts`, {
       method: "POST",
@@ -50,7 +62,12 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
     router.refresh();
   }
 
-  async function createLowestAlert(favouriteId: string, fuelProductId: string) {
+  async function createLowestAlert(favouriteId: string) {
+    const fuelProductId = selectedProducts[favouriteId];
+    if (!fuelProductId) {
+      return;
+    }
+
     setSavingFor(favouriteId);
     await fetch(`/api/favourites/${favouriteId}/alerts`, {
       method: "POST",
@@ -100,6 +117,25 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
 
             <div className="alert-builder">
               <label>
+                Fuel type
+                <select
+                  value={selectedProducts[favourite.id] ?? favourite.station.products[0]?.id ?? ""}
+                  onChange={(event) =>
+                    setSelectedProducts((current) => ({
+                      ...current,
+                      [favourite.id]: event.target.value
+                    }))
+                  }
+                  disabled={savingFor === favourite.id || favourite.station.products.length === 0}
+                >
+                  {favourite.station.products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.displayName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
                 Threshold alert
                 <input
                   type="number"
@@ -118,7 +154,7 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
                 <button
                   type="button"
                   disabled={savingFor === favourite.id || favourite.station.products.length === 0}
-                  onClick={() => createThresholdAlert(favourite.id, favourite.station.products[0].id)}
+                  onClick={() => createThresholdAlert(favourite.id)}
                 >
                   Alert on drop
                 </button>
@@ -126,7 +162,7 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
                   type="button"
                   className="button-secondary"
                   disabled={savingFor === favourite.id || favourite.station.products.length === 0}
-                  onClick={() => createLowestAlert(favourite.id, favourite.station.products[0].id)}
+                  onClick={() => createLowestAlert(favourite.id)}
                 >
                   Alert on 30-day low
                 </button>
@@ -137,6 +173,9 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
               <div className="alert-list">
                 {favourite.alerts.map((alert) => (
                   <p key={alert.id} className="muted">
+                    {alert.fuelProductId
+                      ? `${favourite.station.products.find((product) => product.id === alert.fuelProductId)?.displayName ?? "Selected fuel"} • `
+                      : ""}
                     {alert.thresholdPrice
                       ? `Threshold: ${alert.thresholdPrice}`
                       : `Lowest in ${alert.lowestLookbackDays} days`}
