@@ -414,11 +414,12 @@ button:hover:not(:disabled),
 
 .checkbox input::after {
   content: "";
-  width: 0.45rem;
-  height: 0.75rem;
+  width: 0.4rem;
+  height: 0.68rem;
   border-right: 2px solid white;
   border-bottom: 2px solid white;
-  transform: rotate(45deg) scale(0);
+  transform: translateY(-0.05rem) rotate(45deg) scale(0);
+  transform-origin: center;
   transition: transform 0.16s ease;
 }
 
@@ -428,7 +429,7 @@ button:hover:not(:disabled),
 }
 
 .checkbox input:checked::after {
-  transform: rotate(45deg) scale(1);
+  transform: translateY(-0.05rem) rotate(45deg) scale(1);
 }
 
 .favourite-card-header {
