@@ -27,6 +27,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  line-height: 1.5;
 }
 
 a {
@@ -40,13 +41,74 @@ select {
   font: inherit;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
 input,
 select {
+  appearance: none;
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border);
   padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+input::placeholder {
+  color: color-mix(in srgb, var(--muted) 80%, white);
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+select {
+  padding-right: 3rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent-strong) 50%),
+    linear-gradient(135deg, var(--accent-strong) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.3rem) calc(50% - 0.14rem),
+    calc(100% - 0.95rem) calc(50% - 0.14rem);
+  background-size: 0.45rem 0.45rem;
+  background-repeat: no-repeat;
+}
+
+input:hover,
+select:hover {
+  border-color: rgba(157, 66, 28, 0.28);
   background: white;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+.link-button:focus-visible,
+a:focus-visible {
+  outline: none;
+  border-color: rgba(157, 66, 28, 0.45);
+  box-shadow: 0 0 0 4px rgba(215, 122, 50, 0.18);
+}
+
+input:disabled,
+select:disabled,
+button:disabled,
+.link-button[aria-disabled="true"] {
+  opacity: 0.58;
+  cursor: not-allowed;
 }
 
 button,
@@ -60,6 +122,20 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+button:hover:not(:disabled),
+.link-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(65, 42, 20, 0.12);
 }
 
 .button-secondary {
@@ -68,10 +144,16 @@ button,
   border: 1px solid rgba(157, 66, 28, 0.2);
 }
 
+.button-secondary:hover:not(:disabled),
+.link-button.button-secondary:hover {
+  background: rgba(157, 66, 28, 0.08);
+}
+
 .button-danger {
   background: #b23a2f;
   color: white;
   padding: 0.75rem 1rem;
+  min-width: 2.5rem;
 }
 
 .button-inline-danger {
@@ -85,6 +167,11 @@ button,
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+}
+
+.button-inline-danger:hover:not(:disabled) {
+  background: rgba(178, 58, 47, 0.14);
+  box-shadow: none;
 }
 
 .app-shell {
@@ -124,6 +211,10 @@ button,
   color: var(--muted);
 }
 
+.body-copy {
+  line-height: 1.6;
+}
+
 .brand-mark {
   width: 3rem;
   height: 3rem;
@@ -139,6 +230,28 @@ button,
 .nav-links {
   display: flex;
   gap: 1rem;
+}
+
+.nav-links a {
+  position: relative;
+}
+
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.2rem;
+  width: 100%;
+  height: 1px;
+  background: rgba(157, 66, 28, 0.45);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+}
+
+.nav-links a:hover::after,
+.nav-links a:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .main-grid {
@@ -160,12 +273,6 @@ button,
   letter-spacing: 0.16em;
   font-size: 0.8rem;
   color: var(--accent-strong);
-}
-
-.hero h1,
-.card h2,
-.result-card h3 {
-  margin: 0;
 }
 
 .hero h1 {
@@ -248,14 +355,74 @@ button,
   background: rgba(255, 255, 255, 0.72);
 }
 
+.alert-builder {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.field-label {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.field-group {
+  margin: 0;
+  padding: 1rem 1.05rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(53, 36, 21, 0.08);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.field-legend {
+  padding: 0 0.4rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
 .checkbox {
   display: flex;
   gap: 0.8rem;
   align-items: center;
+  padding: 0.1rem 0;
+  font-weight: 500;
 }
 
 .checkbox input {
-  width: auto;
+  appearance: none;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  border-radius: 0.32rem;
+  border: 1px solid rgba(157, 66, 28, 0.28);
+  background: rgba(255, 255, 255, 0.96);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.checkbox input::after {
+  content: "";
+  width: 0.45rem;
+  height: 0.75rem;
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.16s ease;
+}
+
+.checkbox input:checked {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.checkbox input:checked::after {
+  transform: rotate(45deg) scale(1);
 }
 
 .sync-state {
@@ -323,6 +490,16 @@ button,
   border-bottom: 0;
 }
 
+.empty-state {
+  text-align: center;
+  justify-items: center;
+  padding: 2rem 1.5rem;
+}
+
+.empty-state p {
+  max-width: 34rem;
+}
+
 @media (max-width: 800px) {
   .site-header,
   .hero,
@@ -337,6 +514,10 @@ button,
 
   .hero h1 {
     max-width: none;
+  }
+
+  .field-group {
+    padding: 0.9rem;
   }
 
   .alert-row {

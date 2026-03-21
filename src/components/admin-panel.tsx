@@ -179,10 +179,10 @@ export function AdminPanel({
         />
         Store history for all stations
       </label>
-      <p className="muted">
+      <p className="muted body-copy">
         Disabled by default so snapshots are only stored for stations users have favourited.
       </p>
-      <label>
+      <label className="field-label">
         Admin email
         <input
           type="email"
@@ -190,8 +190,8 @@ export function AdminPanel({
           onChange={(event) => setForm((current) => ({ ...current, adminEmail: event.target.value }))}
         />
       </label>
-      <fieldset className="stack">
-        <legend>Enabled providers</legend>
+      <fieldset className="field-group stack">
+        <legend className="field-legend">Enabled providers</legend>
         {providerOptions.map((provider) => (
           <label key={provider.key} className="checkbox">
             <input
@@ -218,12 +218,12 @@ export function AdminPanel({
           {manualSync.status === "RUNNING" ? "Sync in progress..." : "Run sync"}
         </button>
       </div>
-      {status ? <p className="muted">{status}</p> : null}
+      {status ? <p className="muted body-copy">{status}</p> : null}
       <section className={`sync-state ${syncStateTone(manualSync.status)}`}>
         <div className="sync-state-header">
           <div>
             <h3>Manual sync status</h3>
-            <p className="muted">
+            <p className="muted body-copy">
               {manualSync.status === "RUNNING"
                 ? "This job keeps running on the server. You can leave this page and come back later."
                 : "The latest manual sync result is saved here, even after you leave this page."}
@@ -234,12 +234,12 @@ export function AdminPanel({
         <div className="sync-progress" aria-hidden="true">
           <div className="sync-progress-bar" style={{ width: progressLabel }} />
         </div>
-        <p>{manualSync.message ?? "Manual sync has not been started yet."}</p>
-        <p className="muted">
+        <p className="body-copy">{manualSync.message ?? "Manual sync has not been started yet."}</p>
+        <p className="muted body-copy">
           {startedAtLabel ? `Started ${startedAtLabel}. ` : ""}
           {finishedAtLabel ? `Last finished ${finishedAtLabel}.` : manualSync.status === "RUNNING" ? "Updates refresh automatically while this page is open." : ""}
         </p>
-        <p className="muted">{resultSummary}</p>
+        <p className="muted body-copy">{resultSummary}</p>
       </section>
     </section>
   );

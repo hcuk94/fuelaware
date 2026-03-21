@@ -26,11 +26,11 @@ export function SignInCard({ registrationEnabled }: { registrationEnabled: boole
   return (
     <div className="card auth-card">
       <h2>Email sign-in</h2>
-      <p>
+      <p className="body-copy">
         FuelAware uses passwordless magic links. {registrationEnabled ? "New users can register." : "Registration is currently closed."}
       </p>
       <form className="stack" onSubmit={onSubmit}>
-        <label>
+        <label className="field-label">
           Email
           <input
             type="email"
@@ -42,7 +42,7 @@ export function SignInCard({ registrationEnabled }: { registrationEnabled: boole
         </label>
         <button type="submit">Send magic link</button>
       </form>
-      {status ? <p className="muted">{status}</p> : null}
+      {status ? <p className="muted body-copy">{status}</p> : null}
     </div>
   );
 }

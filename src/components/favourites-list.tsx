@@ -145,7 +145,7 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
             </ul>
 
             <div className="alert-builder">
-              <label>
+              <label className="field-label">
                 Fuel type
                 <select
                   value={selectedProducts[favourite.id] ?? favourite.station.products[0]?.id ?? ""}
@@ -164,7 +164,7 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
                   ))}
                 </select>
               </label>
-              <label>
+              <label className="field-label">
                 Threshold alert
                 <input
                   type="number"
