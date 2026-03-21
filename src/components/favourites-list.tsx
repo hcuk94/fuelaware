@@ -114,26 +114,25 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
           <article key={favourite.id} className="result-card">
             <div className="favourite-card-header">
               <div className="favourite-card-title">
-                <h3>{favourite.nickname ?? favourite.station.name}</h3>
+                <h3>
+                  <a className="station-link" href={`/stations/${favourite.station.id}`}>
+                    {favourite.nickname ?? favourite.station.name}
+                  </a>
+                </h3>
                 <p className="body-copy">
                   {favourite.station.addressLine1 ? `${favourite.station.addressLine1}, ` : ""}
                   {favourite.station.city ?? ""}
                 </p>
               </div>
-            </div>
-
-            <div className="favourite-card-actions">
-              <a className="card-action" href={`/stations/${favourite.station.id}`}>
-                Open
-              </a>
               <button
                 type="button"
-                className="card-action card-action-danger"
+                className="card-dismiss"
                 aria-label={`Remove ${favourite.nickname ?? favourite.station.name} from favourites`}
+                title="Remove from favourites"
                 disabled={savingFor === favourite.id}
                 onClick={() => removeFavourite(favourite.id)}
               >
-                Remove
+                <span aria-hidden="true">×</span>
               </button>
             </div>
 
