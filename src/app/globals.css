@@ -162,6 +162,47 @@ button:hover:not(:disabled),
   font-size: 0.95rem;
 }
 
+.card-action {
+  border: 1px solid rgba(53, 36, 21, 0.12);
+  border-radius: 999px;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.8rem;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.card-action:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(157, 66, 28, 0.22);
+  color: var(--text);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+.card-action-danger {
+  border-color: rgba(178, 58, 47, 0.16);
+  background: rgba(178, 58, 47, 0.06);
+  color: #9d421c;
+}
+
+.card-action-danger:hover:not(:disabled) {
+  background: rgba(178, 58, 47, 0.1);
+  border-color: rgba(178, 58, 47, 0.22);
+  color: #7d3416;
+}
+
 .button-inline-danger {
   border: 0;
   border-radius: 999px;
@@ -462,7 +503,7 @@ button:hover:not(:disabled),
   gap: 0.65rem;
 }
 
-.favourite-card-actions .link-button,
+.favourite-card-actions a,
 .favourite-card-actions button {
   flex: 0 0 auto;
 }

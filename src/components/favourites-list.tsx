@@ -123,12 +123,12 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
             </div>
 
             <div className="favourite-card-actions">
-              <a className="button-secondary link-button button-compact" href={`/stations/${favourite.station.id}`}>
+              <a className="card-action" href={`/stations/${favourite.station.id}`}>
                 Open
               </a>
               <button
                 type="button"
-                className="button-danger button-compact"
+                className="card-action card-action-danger"
                 aria-label={`Remove ${favourite.nickname ?? favourite.station.name} from favourites`}
                 disabled={savingFor === favourite.id}
                 onClick={() => removeFavourite(favourite.id)}
