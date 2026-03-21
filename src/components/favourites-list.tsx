@@ -35,6 +35,7 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
   const router = useRouter();
   const [savingFor, setSavingFor] = useState<string | null>(null);
   const [thresholds, setThresholds] = useState<Record<string, string>>({});
+  const [expandedForms, setExpandedForms] = useState<Record<string, boolean>>({});
   const [selectedProducts, setSelectedProducts] = useState<Record<string, string>>(
     Object.fromEntries(
       favourites
@@ -111,15 +112,15 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
       <div className="results-grid">
         {favourites.map((favourite) => (
           <article key={favourite.id} className="result-card">
-            <div className="section-heading">
-              <div>
+            <div className="favourite-card-header">
+              <div className="favourite-card-title">
                 <h3>{favourite.nickname ?? favourite.station.name}</h3>
-                <p>
+                <p className="body-copy">
                   {favourite.station.addressLine1 ? `${favourite.station.addressLine1}, ` : ""}
                   {favourite.station.city ?? ""}
                 </p>
               </div>
-              <div className="actions">
+              <div className="favourite-card-actions">
                 <a className="button-secondary link-button" href={`/stations/${favourite.station.id}`}>
                   Open
                 </a>
@@ -144,58 +145,86 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
               ))}
             </ul>
 
-            <div className="alert-builder">
-              <label className="field-label">
-                Fuel type
-                <select
-                  value={selectedProducts[favourite.id] ?? favourite.station.products[0]?.id ?? ""}
-                  onChange={(event) =>
-                    setSelectedProducts((current) => ({
-                      ...current,
-                      [favourite.id]: event.target.value
-                    }))
-                  }
-                  disabled={savingFor === favourite.id || favourite.station.products.length === 0}
-                >
-                  {favourite.station.products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.displayName}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field-label">
-                Threshold alert
-                <input
-                  type="number"
-                  step="0.001"
-                  placeholder="1.500"
-                  value={thresholds[favourite.id] ?? ""}
-                  onChange={(event) =>
-                    setThresholds((current) => ({
-                      ...current,
-                      [favourite.id]: event.target.value
-                    }))
-                  }
-                />
-              </label>
-              <div className="actions">
+            <div className="alerts-section stack">
+              <div className="alerts-header">
+                <div>
+                  <h4>Alerts</h4>
+                  <p className="muted body-copy">
+                    {favourite.alerts.length > 0
+                      ? `${favourite.alerts.length} active ${favourite.alerts.length === 1 ? "alert" : "alerts"}`
+                      : "No alerts configured yet."}
+                  </p>
+                </div>
                 <button
                   type="button"
+                  className="text-action"
                   disabled={savingFor === favourite.id || favourite.station.products.length === 0}
-                  onClick={() => createThresholdAlert(favourite.id)}
+                  onClick={() =>
+                    setExpandedForms((current) => ({
+                      ...current,
+                      [favourite.id]: !current[favourite.id]
+                    }))
+                  }
                 >
-                  Alert on drop
-                </button>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  disabled={savingFor === favourite.id || favourite.station.products.length === 0}
-                  onClick={() => createLowestAlert(favourite.id)}
-                >
-                  Alert on 30-day low
+                  {expandedForms[favourite.id] ? "Cancel" : "Create"}
                 </button>
               </div>
+
+              {expandedForms[favourite.id] ? (
+                <div className="alert-builder">
+                  <label className="field-label">
+                    Fuel type
+                    <select
+                      value={selectedProducts[favourite.id] ?? favourite.station.products[0]?.id ?? ""}
+                      onChange={(event) =>
+                        setSelectedProducts((current) => ({
+                          ...current,
+                          [favourite.id]: event.target.value
+                        }))
+                      }
+                      disabled={savingFor === favourite.id || favourite.station.products.length === 0}
+                    >
+                      {favourite.station.products.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.displayName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field-label">
+                    Threshold alert
+                    <input
+                      type="number"
+                      step="0.001"
+                      placeholder="1.500"
+                      value={thresholds[favourite.id] ?? ""}
+                      onChange={(event) =>
+                        setThresholds((current) => ({
+                          ...current,
+                          [favourite.id]: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <div className="actions alert-builder-actions">
+                    <button
+                      type="button"
+                      disabled={savingFor === favourite.id || favourite.station.products.length === 0}
+                      onClick={() => createThresholdAlert(favourite.id)}
+                    >
+                      Alert on drop
+                    </button>
+                    <button
+                      type="button"
+                      className="button-secondary"
+                      disabled={savingFor === favourite.id || favourite.station.products.length === 0}
+                      onClick={() => createLowestAlert(favourite.id)}
+                    >
+                      Alert on 30-day low
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {favourite.alerts.length > 0 ? (
