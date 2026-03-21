@@ -43,6 +43,24 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
     )
   );
 
+  async function removeFavourite(favouriteId: string) {
+    setSavingFor(favouriteId);
+    await fetch(`/api/favourites/${favouriteId}`, {
+      method: "DELETE"
+    });
+    setSavingFor(null);
+    router.refresh();
+  }
+
+  async function removeAlert(favouriteId: string, alertId: string) {
+    setSavingFor(favouriteId);
+    await fetch(`/api/favourites/${favouriteId}/alerts/${alertId}`, {
+      method: "DELETE"
+    });
+    setSavingFor(null);
+    router.refresh();
+  }
+
   async function createThresholdAlert(favouriteId: string) {
     const fuelProductId = selectedProducts[favouriteId];
     if (!fuelProductId) {
@@ -101,9 +119,20 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
                   {favourite.station.city ?? ""}
                 </p>
               </div>
-              <a className="button-secondary link-button" href={`/stations/${favourite.station.id}`}>
-                Open
-              </a>
+              <div className="actions">
+                <a className="button-secondary link-button" href={`/stations/${favourite.station.id}`}>
+                  Open
+                </a>
+                <button
+                  type="button"
+                  className="button-danger"
+                  aria-label={`Remove ${favourite.nickname ?? favourite.station.name} from favourites`}
+                  disabled={savingFor === favourite.id}
+                  onClick={() => removeFavourite(favourite.id)}
+                >
+                  X
+                </button>
+              </div>
             </div>
 
             <ul className="product-list">
@@ -172,15 +201,26 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
             {favourite.alerts.length > 0 ? (
               <div className="alert-list">
                 {favourite.alerts.map((alert) => (
-                  <p key={alert.id} className="muted">
-                    {alert.fuelProductId
-                      ? `${favourite.station.products.find((product) => product.id === alert.fuelProductId)?.displayName ?? "Selected fuel"} • `
-                      : ""}
-                    {alert.thresholdPrice
-                      ? `Threshold: ${alert.thresholdPrice}`
-                      : `Lowest in ${alert.lowestLookbackDays} days`}
-                    {alert.lastTriggeredAt ? ` • last triggered ${formatDate(alert.lastTriggeredAt)}` : ""}
-                  </p>
+                  <div key={alert.id} className="alert-row">
+                    <p className="muted">
+                      {alert.fuelProductId
+                        ? `${favourite.station.products.find((product) => product.id === alert.fuelProductId)?.displayName ?? "Selected fuel"} • `
+                        : ""}
+                      {alert.thresholdPrice
+                        ? `Threshold: ${alert.thresholdPrice}`
+                        : `Lowest in ${alert.lowestLookbackDays} days`}
+                      {alert.lastTriggeredAt ? ` • last triggered ${formatDate(alert.lastTriggeredAt)}` : ""}
+                    </p>
+                    <button
+                      type="button"
+                      className="button-danger"
+                      aria-label="Delete alert"
+                      disabled={savingFor === favourite.id}
+                      onClick={() => removeAlert(favourite.id, alert.id)}
+                    >
+                      X
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : null}
