@@ -130,7 +130,7 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
                   disabled={savingFor === favourite.id}
                   onClick={() => removeFavourite(favourite.id)}
                 >
-                  X
+                  Remove
                 </button>
               </div>
             </div>
@@ -213,12 +213,12 @@ export function FavouritesList({ favourites }: { favourites: Favourite[] }) {
                     </p>
                     <button
                       type="button"
-                      className="button-danger"
+                      className="button-inline-danger"
                       aria-label="Delete alert"
                       disabled={savingFor === favourite.id}
                       onClick={() => removeAlert(favourite.id, alert.id)}
                     >
-                      X
+                      Remove
                     </button>
                   </div>
                 ))}

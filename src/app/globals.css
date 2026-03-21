@@ -71,8 +71,20 @@ button,
 .button-danger {
   background: #b23a2f;
   color: white;
-  min-width: 2.5rem;
-  padding: 0.65rem 0.9rem;
+  padding: 0.75rem 1rem;
+}
+
+.button-inline-danger {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: rgba(178, 58, 47, 0.08);
+  color: #9d421c;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .app-shell {
@@ -294,10 +306,21 @@ button,
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed rgba(35, 22, 15, 0.08);
 }
 
 .alert-row p {
   margin: 0;
+}
+
+.alert-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.alert-row:last-child {
+  border-bottom: 0;
 }
 
 @media (max-width: 800px) {
