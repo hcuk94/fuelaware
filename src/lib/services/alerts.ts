@@ -96,6 +96,13 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
   const typedProduct = product as AlertProduct;
 
   const currentPrice = Number(typedProduct.lastPrice);
+  const [latestSnapshot, ...historicalSnapshots] = typedProduct.snapshots;
+
+  if (!latestSnapshot || historicalSnapshots.length === 0) {
+    return;
+  }
+
+  const previousPrice = Number(historicalSnapshots[0].price);
 
   for (const alert of typedProduct.alerts) {
     if (!alert.isEnabled) continue;
@@ -105,20 +112,27 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
     let shouldTrigger = false;
     let reason = "";
 
-    if (alert.thresholdPrice != null && currentPrice <= Number(alert.thresholdPrice)) {
-      shouldTrigger = true;
-      reason = `Price dropped below your threshold: ${formatPrice(currentPrice, typedProduct.currency, typedProduct.unit)}`;
+    if (alert.thresholdPrice != null) {
+      const thresholdPrice = Number(alert.thresholdPrice);
+      if (currentPrice <= thresholdPrice && previousPrice > thresholdPrice) {
+        shouldTrigger = true;
+        reason = `Price dropped below your threshold: ${formatPrice(currentPrice, typedProduct.currency, typedProduct.unit)}`;
+      }
     }
 
     if (!shouldTrigger && alert.lowestLookbackDays != null) {
       const cutoff = Date.now() - alert.lowestLookbackDays * 24 * 60 * 60 * 1000;
-      const relevant = typedProduct.snapshots.filter(
+      const relevantHistorical = historicalSnapshots.filter(
         (snapshot: AlertSnapshot) => snapshot.observedAt.getTime() >= cutoff
       );
-      const minimum = Math.min(...relevant.map((snapshot: AlertSnapshot) => Number(snapshot.price)));
-      if (relevant.length > 0 && currentPrice <= minimum) {
-        shouldTrigger = true;
-        reason = `Price is at a ${alert.lowestLookbackDays}-day low: ${formatPrice(currentPrice, typedProduct.currency, typedProduct.unit)}`;
+      if (relevantHistorical.length > 0) {
+        const minimumHistorical = Math.min(
+          ...relevantHistorical.map((snapshot: AlertSnapshot) => Number(snapshot.price))
+        );
+        if (currentPrice <= minimumHistorical && previousPrice > minimumHistorical) {
+          shouldTrigger = true;
+          reason = `Price is at a ${alert.lowestLookbackDays}-day low: ${formatPrice(currentPrice, typedProduct.currency, typedProduct.unit)}`;
+        }
       }
     }
 
