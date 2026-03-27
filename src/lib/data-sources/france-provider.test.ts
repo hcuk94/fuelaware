@@ -184,12 +184,93 @@ describe("FranceFuelProvider", () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(global.fetch).toHaveBeenNthCalledWith(
       1,
-      "https://example.test/fr?limit=2&offset=0",
+      "https://example.test/fr?limit=2&offset=0&order_by=id",
       expect.any(Object)
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       2,
-      "https://example.test/fr?limit=2&offset=2",
+      "https://example.test/fr?limit=2&offset=2&order_by=id",
+      expect.any(Object)
+    );
+  });
+
+  it("keeps fetching when a short intermediate page is returned but total_count says more records remain", async () => {
+    process.env = { ...originalEnv, FRANCE_FUEL_API_URL: "https://example.test/fr?limit=2" };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total_count: 5,
+          results: [
+            {
+              id: "fr-1",
+              adresse: "1 Rue A",
+              ville: "Paris",
+              code_postal: "75001",
+              geom: { lat: 48.86, lon: 2.34 },
+              prix: [{ "@nom": "Gazole", "@valeur": 1.68, "@maj": "2026-03-20T10:00:00Z" }]
+            },
+            {
+              id: "fr-2",
+              adresse: "2 Rue B",
+              ville: "Lyon",
+              code_postal: "69001",
+              geom: { lat: 45.76, lon: 4.84 },
+              prix: [{ "@nom": "SP98", "@valeur": 1.89, "@maj": "2026-03-20T11:00:00Z" }]
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total_count: 5,
+          results: [
+            {
+              id: "fr-3",
+              adresse: "3 Rue C",
+              ville: "Marseille",
+              code_postal: "13001",
+              geom: { lat: 43.29, lon: 5.37 },
+              prix: [{ "@nom": "E10", "@valeur": 1.75, "@maj": "2026-03-20T12:00:00Z" }]
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total_count: 5,
+          results: [
+            {
+              id: "fr-4",
+              adresse: "4 Rue D",
+              ville: "Nice",
+              code_postal: "06000",
+              geom: { lat: 43.7, lon: 7.26 },
+              prix: [{ "@nom": "Gazole", "@valeur": 1.7, "@maj": "2026-03-20T12:30:00Z" }]
+            },
+            {
+              id: "fr-5",
+              adresse: "5 Rue E",
+              ville: "Lille",
+              code_postal: "59000",
+              geom: { lat: 50.63, lon: 3.06 },
+              prix: [{ "@nom": "SP95", "@valeur": 1.82, "@maj": "2026-03-20T13:00:00Z" }]
+            }
+          ]
+        })
+      }) as typeof fetch;
+
+    const provider = new FranceFuelProvider();
+    const stations = await provider.fetchStations();
+
+    expect(stations).toHaveLength(5);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      3,
+      "https://example.test/fr?limit=2&offset=4&order_by=id",
       expect.any(Object)
     );
   });

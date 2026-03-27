@@ -240,6 +240,9 @@ export class FranceFuelProvider implements FuelDataSource {
       const pageUrl = new URL(baseUrl);
       pageUrl.searchParams.set("limit", String(pageSize));
       pageUrl.searchParams.set("offset", String(offsetBase + page * pageSize));
+      if (!pageUrl.searchParams.has("order_by")) {
+        pageUrl.searchParams.set("order_by", "id")
+      }
 
       const response = await fetchWithEnvProxy(pageUrl.toString(), { next: { revalidate: 0 } });
       if (!response.ok) {
@@ -255,11 +258,15 @@ export class FranceFuelProvider implements FuelDataSource {
       totalCount = payload.total_count ?? totalCount;
       records.push(...pageRecords);
 
-      if (pageRecords.length < pageSize) {
+      if (pageRecords.length === 0) {
         break;
       }
 
       if (typeof totalCount === "number" && records.length >= totalCount) {
+        break;
+      }
+
+      if (typeof totalCount !== "number" && pageRecords.length < pageSize) {
         break;
       }
 
