@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getSettings, normalizeEnabledProviderKeys } from "@/lib/services/settings";
+import {
+  getSettings,
+  normalizeEnabledProviderKeys,
+  normalizeProviderAutoSyncConfigs,
+  normalizeProviderAutoSyncState
+} from "@/lib/services/settings";
 
 function normalizeEmail(email?: string | null) {
   const normalized = email?.trim().toLowerCase();
@@ -20,11 +25,14 @@ export async function POST(request: NextRequest) {
     storeStationHistoryForAll?: boolean;
     adminEmail?: string;
     enabledProviderKeys?: unknown;
+    providerAutoSyncConfigs?: unknown;
   };
 
   const currentSettings = await getSettings();
   const adminEmail = normalizeEmail(body.adminEmail);
   const enabledProviderKeys = normalizeEnabledProviderKeys(body.enabledProviderKeys);
+  const providerAutoSyncConfigs = normalizeProviderAutoSyncConfigs(body.providerAutoSyncConfigs);
+  const providerAutoSyncState = normalizeProviderAutoSyncState(currentSettings.providerAutoSyncState, providerAutoSyncConfigs);
 
   const settings = await prisma.appSettings.upsert({
     where: { id: "singleton" },
@@ -33,7 +41,9 @@ export async function POST(request: NextRequest) {
       allowManualSync: body.allowManualSync ?? currentSettings.allowManualSync,
       storeStationHistoryForAll: body.storeStationHistoryForAll ?? currentSettings.storeStationHistoryForAll,
       adminEmail,
-      enabledProviderKeys
+      enabledProviderKeys,
+      providerAutoSyncConfigs,
+      providerAutoSyncState
     },
     create: {
       id: "singleton",
@@ -41,7 +51,9 @@ export async function POST(request: NextRequest) {
       allowManualSync: body.allowManualSync ?? currentSettings.allowManualSync,
       storeStationHistoryForAll: body.storeStationHistoryForAll ?? currentSettings.storeStationHistoryForAll,
       adminEmail,
-      enabledProviderKeys
+      enabledProviderKeys,
+      providerAutoSyncConfigs,
+      providerAutoSyncState
     }
   });
 
@@ -60,7 +72,9 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     settings: {
       ...settings,
-      enabledProviderKeys
+      enabledProviderKeys,
+      providerAutoSyncConfigs,
+      providerAutoSyncState
     }
   });
 }

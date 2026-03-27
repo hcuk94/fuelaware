@@ -61,6 +61,8 @@ model AppSettings {
   storeStationHistoryForAll Boolean @default(false)
   adminEmail          String?
   enabledProviderKeys Json?
+  providerAutoSyncConfigs Json?
+  providerAutoSyncState Json?
   manualSyncStatus    String   @default("IDLE")
   manualSyncProgress  Float    @default(0)
   manualSyncMessage   String?

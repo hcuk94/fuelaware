@@ -22,7 +22,20 @@ async function main() {
       adminEmail,
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
       storeStationHistoryForAll: false,
-      enabledProviderKeys: providerCatalog.map((provider) => provider.key)
+      enabledProviderKeys: providerCatalog.map((provider) => provider.key),
+      providerAutoSyncConfigs: providerCatalog.map((provider) => ({
+        key: provider.key,
+        enabled: true,
+        intervalMinutes: 60
+      })),
+      providerAutoSyncState: providerCatalog.map((provider) => ({
+        key: provider.key,
+        status: "IDLE",
+        intervalMinutes: 60,
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastMessage: null
+      }))
     },
     create: {
       id: "singleton",
@@ -30,7 +43,20 @@ async function main() {
       registrationEnabled: (process.env.REGISTRATION_ENABLED ?? "true") === "true",
       allowManualSync: true,
       storeStationHistoryForAll: false,
-      enabledProviderKeys: providerCatalog.map((provider) => provider.key)
+      enabledProviderKeys: providerCatalog.map((provider) => provider.key),
+      providerAutoSyncConfigs: providerCatalog.map((provider) => ({
+        key: provider.key,
+        enabled: true,
+        intervalMinutes: 60
+      })),
+      providerAutoSyncState: providerCatalog.map((provider) => ({
+        key: provider.key,
+        status: "IDLE",
+        intervalMinutes: 60,
+        lastStartedAt: null,
+        lastFinishedAt: null,
+        lastMessage: null
+      }))
     }
   });
 

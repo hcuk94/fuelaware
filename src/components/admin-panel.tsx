@@ -8,6 +8,19 @@ type Settings = {
   storeStationHistoryForAll: boolean;
   adminEmail: string | null;
   enabledProviderKeys: string[];
+  providerAutoSyncConfigs: {
+    key: string;
+    enabled: boolean;
+    intervalMinutes: number;
+  }[];
+  providerAutoSyncState: {
+    key: string;
+    status: "IDLE" | "RUNNING" | "SUCCEEDED" | "FAILED";
+    intervalMinutes: number;
+    lastStartedAt: string | null;
+    lastFinishedAt: string | null;
+    lastMessage: string | null;
+  }[];
 };
 
 type ProviderOption = {
@@ -104,6 +117,22 @@ export function AdminPanel({
   const progressLabel = `${Math.max(0, Math.min(100, Math.round(manualSync.progress)))}%`;
   const resultSummary = describeSyncResult(manualSync.summary);
 
+  function updateProviderAutoSyncConfig(
+    providerKey: string,
+    updater: (current: { key: string; enabled: boolean; intervalMinutes: number }) => {
+      key: string;
+      enabled: boolean;
+      intervalMinutes: number;
+    }
+  ) {
+    setForm((current) => ({
+      ...current,
+      providerAutoSyncConfigs: current.providerAutoSyncConfigs.map((config) =>
+        config.key === providerKey ? updater(config) : config
+      )
+    }));
+  }
+
   async function save() {
     setSaving(true);
     setStatus("Saving settings...");
@@ -114,7 +143,14 @@ export function AdminPanel({
       body: JSON.stringify(form)
     });
 
-    setStatus(response.ok ? "Settings saved." : "Failed to save settings.");
+    if (response.ok) {
+      const payload = (await response.json()) as { settings: Settings };
+      setForm(payload.settings);
+      setStatus("Settings saved.");
+    } else {
+      setStatus("Failed to save settings.");
+    }
+
     setSaving(false);
   }
 
@@ -209,6 +245,59 @@ export function AdminPanel({
             {provider.label}
           </label>
         ))}
+      </fieldset>
+      <fieldset className="field-group stack">
+        <legend className="field-legend">Automatic sync</legend>
+        <p className="muted body-copy">Each provider can run automatically on its own interval. New providers default to every 60 minutes.</p>
+        {providerOptions.map((provider) => {
+          const config = form.providerAutoSyncConfigs.find((item) => item.key === provider.key) ?? {
+            key: provider.key,
+            enabled: true,
+            intervalMinutes: 60
+          };
+          const providerState = form.providerAutoSyncState.find((item) => item.key === provider.key);
+          const providerFinishedAtLabel = formatTimestamp(providerState?.lastFinishedAt ?? null);
+          const providerStartedAtLabel = formatTimestamp(providerState?.lastStartedAt ?? null);
+
+          return (
+            <div key={provider.key} className="stack">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={config.enabled}
+                  onChange={(event) =>
+                    updateProviderAutoSyncConfig(provider.key, (current) => ({ ...current, enabled: event.target.checked }))
+                  }
+                />
+                {provider.label}
+              </label>
+              <label className="field-label">
+                Sync interval in minutes
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={config.intervalMinutes}
+                  onChange={(event) =>
+                    updateProviderAutoSyncConfig(provider.key, (current) => ({
+                      ...current,
+                      intervalMinutes: Math.max(1, Number.parseInt(event.target.value || "60", 10) || 60)
+                    }))
+                  }
+                />
+              </label>
+              <p className="muted body-copy">
+                Status: {providerState?.status ?? "IDLE"}.{" "}
+                {providerFinishedAtLabel
+                  ? `Last finished ${providerFinishedAtLabel}.`
+                  : providerStartedAtLabel
+                    ? `Last started ${providerStartedAtLabel}.`
+                    : "No automatic sync has run yet."}
+                {providerState?.lastMessage ? ` ${providerState.lastMessage}` : ""}
+              </p>
+            </div>
+          );
+        })}
       </fieldset>
       <div className="actions">
         <button type="button" onClick={save} disabled={saving}>

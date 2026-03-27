@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS "AppSettings" (
   "storeStationHistoryForAll" BOOLEAN NOT NULL DEFAULT false,
   "adminEmail" TEXT,
   "enabledProviderKeys" TEXT,
+  "providerAutoSyncConfigs" TEXT,
+  "providerAutoSyncState" TEXT,
   "manualSyncStatus" TEXT NOT NULL DEFAULT 'IDLE',
   "manualSyncProgress" REAL NOT NULL DEFAULT 0,
   "manualSyncMessage" TEXT,

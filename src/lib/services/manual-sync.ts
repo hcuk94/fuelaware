@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getDataSourcesByKeys } from "@/lib/data-sources";
 import { ingestLatestSnapshots } from "./ingest";
 import { getSettings } from "./settings";
+import { getActiveSyncOwner, runExclusiveSync } from "./sync-lock";
 
 type ManualSyncSummaryItem = {
   source: string;
@@ -17,8 +18,6 @@ export type ManualSyncState = {
   startedAt: string | null;
   finishedAt: string | null;
 };
-
-let activeSync: Promise<void> | null = null;
 
 function clampProgress(progress: number) {
   return Math.max(0, Math.min(100, Math.round(progress)));
@@ -186,13 +185,26 @@ async function runManualSync() {
 
 export async function startManualSync() {
   const currentState = await getManualSyncState();
-  if (currentState.status === "RUNNING" && activeSync) {
+  if (currentState.status === "RUNNING") {
     return currentState;
   }
 
-  activeSync = runManualSync().finally(() => {
-    activeSync = null;
-  });
+  const started = runExclusiveSync("manual", runManualSync);
+  if (!started) {
+    const owner = getActiveSyncOwner();
+    const message =
+      owner === "automatic"
+        ? "Automatic sync is running. Manual sync will be available again when it finishes."
+        : "Another sync is already running.";
+
+    await updateManualSyncState({
+      status: "FAILED",
+      progress: 100,
+      message,
+      startedAt: currentState.startedAt ? new Date(currentState.startedAt) : null,
+      finishedAt: new Date()
+    });
+  }
 
   return getManualSyncState();
 }
