@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/start-with-migrations.mjs next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/start-with-migrations.mjs next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "db:init": "sqlite3 prisma/dev.db \".read prisma/init.sql\"",
+    "db:init": "node scripts/run-migrations.mjs",
+    "db:migrate": "node scripts/run-migrations.mjs",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts"

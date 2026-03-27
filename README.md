@@ -57,7 +57,7 @@ npm install
 
 ```bash
 npm run db:generate
-npm run db:init
+npm run db:migrate
 npm run db:seed
 ```
 
@@ -66,6 +66,8 @@ npm run db:seed
 ```bash
 npm run dev
 ```
+
+`npm run dev` and `npm start` automatically apply any pending bundled SQLite schema migrations before the app boots, so existing installations are upgraded on the next launch.
 
 ## Testing
 
@@ -205,4 +207,4 @@ Because upstream schemas and access methods can change, providers are isolated i
 
 ## Local database note
 
-Prisma client generation works normally, but if `prisma db push` fails in your local environment, use `npm run db:init` to apply the bundled SQLite schema and then run the seed script.
+Prisma client generation works normally, and `npm run db:migrate` applies FuelAware's bundled SQLite migrations without requiring a manual `prisma db push`.
