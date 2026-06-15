@@ -62,7 +62,7 @@ function createPrismaMock(storeStationHistoryForAll: boolean, favouritedStationI
       upsert: vi.fn().mockResolvedValue({ id: "stored-product-1" })
     },
     priceSnapshot: {
-      create: vi.fn().mockResolvedValue({})
+      upsert: vi.fn().mockResolvedValue({})
     }
   } as unknown as PrismaClient;
 }
@@ -78,7 +78,7 @@ describe("ingestLatestSnapshots", () => {
     await ingestLatestSnapshots(prisma, { sources: [createSource()] });
 
     expect(prisma.favourite.findMany).toHaveBeenCalledOnce();
-    expect(prisma.priceSnapshot.create).not.toHaveBeenCalled();
+    expect(prisma.priceSnapshot.upsert).not.toHaveBeenCalled();
     expect(evaluateAlertsForProduct).not.toHaveBeenCalled();
   });
 
@@ -87,7 +87,26 @@ describe("ingestLatestSnapshots", () => {
 
     await ingestLatestSnapshots(prisma, { sources: [createSource()] });
 
-    expect(prisma.priceSnapshot.create).toHaveBeenCalledOnce();
+    expect(prisma.priceSnapshot.upsert).toHaveBeenCalledWith({
+      where: {
+        fuelProductId_observedAt: {
+          fuelProductId: "stored-product-1",
+          observedAt: new Date("2026-03-20T10:00:00Z")
+        }
+      },
+      update: {
+        price: expect.anything(),
+        currency: "GBP",
+        unit: "L"
+      },
+      create: {
+        fuelProductId: "stored-product-1",
+        price: expect.anything(),
+        currency: "GBP",
+        unit: "L",
+        observedAt: new Date("2026-03-20T10:00:00Z")
+      }
+    });
     expect(evaluateAlertsForProduct).toHaveBeenCalledWith(prisma, "stored-product-1");
   });
 
@@ -97,7 +116,7 @@ describe("ingestLatestSnapshots", () => {
     await ingestLatestSnapshots(prisma, { sources: [createSource()] });
 
     expect(prisma.favourite.findMany).not.toHaveBeenCalled();
-    expect(prisma.priceSnapshot.create).toHaveBeenCalledOnce();
+    expect(prisma.priceSnapshot.upsert).toHaveBeenCalledOnce();
     expect(evaluateAlertsForProduct).toHaveBeenCalledWith(prisma, "stored-product-1");
   });
 });

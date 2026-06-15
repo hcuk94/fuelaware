@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/price-chart";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/services/settings";
+import { normalizeSnapshotSeries } from "@/lib/utils/snapshots";
 import { formatDate, formatPrice } from "@/lib/utils/format";
 
 type StationSnapshot = {
@@ -42,8 +43,8 @@ export default async function StationPage({ params }: { params: Promise<{ statio
       products: {
         include: {
           snapshots: {
-            orderBy: { observedAt: "asc" },
-            take: 120
+            orderBy: [{ observedAt: "desc" }, { createdAt: "desc" }],
+            take: 240
           }
         },
         orderBy: { displayName: "asc" }
@@ -80,10 +81,7 @@ export default async function StationPage({ params }: { params: Promise<{ statio
             <span className="muted">Updated {formatDate(product.lastUpdatedAt)}</span>
           </div>
           <PriceChart
-            data={product.snapshots.map((snapshot: StationSnapshot) => ({
-              observedAt: snapshot.observedAt.toISOString(),
-              price: Number(snapshot.price)
-            }))}
+            data={normalizeSnapshotSeries(product.snapshots)}
             currency={product.currency}
             unit={product.unit}
           />

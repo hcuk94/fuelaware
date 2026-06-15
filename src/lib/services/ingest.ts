@@ -154,8 +154,19 @@ export async function ingestLatestSnapshots(client: PrismaClient = sharedPrisma,
           continue;
         }
 
-        await client.priceSnapshot.create({
-          data: {
+        await client.priceSnapshot.upsert({
+          where: {
+            fuelProductId_observedAt: {
+              fuelProductId: storedProduct.id,
+              observedAt: product.observedAt
+            }
+          },
+          update: {
+            price: new Decimal(product.price),
+            currency: product.currency,
+            unit: product.unit
+          },
+          create: {
             fuelProductId: storedProduct.id,
             price: new Decimal(product.price),
             currency: product.currency,
