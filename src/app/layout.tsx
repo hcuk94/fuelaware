@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { AuthSessionProvider } from "@/components/session-provider";
-import { ensureAutomaticSyncScheduler } from "@/lib/services/auto-sync";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  ensureAutomaticSyncScheduler();
   const session = await auth();
 
   return (

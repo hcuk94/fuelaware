@@ -121,7 +121,7 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
     }
 
     if (!shouldTrigger && alert.lowestLookbackDays != null) {
-      const cutoff = Date.now() - alert.lowestLookbackDays * 24 * 60 * 60 * 1000;
+      const cutoff = latestSnapshot.observedAt.getTime() - alert.lowestLookbackDays * 24 * 60 * 60 * 1000;
       const relevantHistorical = historicalSnapshots.filter(
         (snapshot: AlertSnapshot) => snapshot.observedAt.getTime() >= cutoff
       );
