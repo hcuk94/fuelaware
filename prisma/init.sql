@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS "PriceSnapshot" (
 );
 
 CREATE INDEX IF NOT EXISTS "PriceSnapshot_fuelProductId_observedAt_idx" ON "PriceSnapshot"("fuelProductId", "observedAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "PriceSnapshot_fuelProductId_observedAt_key" ON "PriceSnapshot"("fuelProductId", "observedAt");
 
 CREATE TABLE IF NOT EXISTS "Favourite" (
   "id" TEXT NOT NULL PRIMARY KEY,

@@ -99,6 +99,37 @@ const migrations = [
         db.exec('ALTER TABLE "AppSettings" ADD COLUMN "providerAutoSyncState" TEXT');
       }
     }
+  },
+  {
+    id: "0003_price_snapshot_dedupe",
+    up(db) {
+      if (!tableExists(db, "PriceSnapshot")) {
+        applyInitialSchema(db);
+        return;
+      }
+
+      db.exec(`
+        DELETE FROM "PriceSnapshot"
+        WHERE "id" IN (
+          SELECT "id"
+          FROM (
+            SELECT
+              "id",
+              ROW_NUMBER() OVER (
+                PARTITION BY "fuelProductId", "observedAt"
+                ORDER BY "createdAt" DESC, "id" DESC
+              ) AS "duplicateRank"
+            FROM "PriceSnapshot"
+          )
+          WHERE "duplicateRank" > 1
+        );
+      `);
+
+      db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS "PriceSnapshot_fuelProductId_observedAt_key"
+        ON "PriceSnapshot"("fuelProductId", "observedAt");
+      `);
+    }
   }
 ];
 

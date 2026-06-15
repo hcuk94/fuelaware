@@ -128,6 +128,7 @@ model PriceSnapshot {
   fuelProduct      FuelProduct @relation(fields: [fuelProductId], references: [id], onDelete: Cascade)
 
   @@index([fuelProductId, observedAt])
+  @@unique([fuelProductId, observedAt])
 }
 
 model Favourite {
