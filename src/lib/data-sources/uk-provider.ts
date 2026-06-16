@@ -23,6 +23,10 @@ type UkApiRecord = {
   city?: string;
   postcode?: string;
   location?: {
+    address_line_1?: string;
+    line_1?: string;
+    town?: string;
+    city?: string;
     latitude?: number | string;
     longitude?: number | string;
     postcode?: string;
@@ -275,8 +279,16 @@ function buildStationSeed(record: UkApiRecord) {
     type: SiteType.STATION,
     countryCode: "GB",
     addressLine1:
-      asString(container.address) ?? asString(container.address_line_1) ?? asString(container.line_1),
-    city: asString(container.town) ?? asString(container.city),
+      asString(container.address) ??
+      asString(container.address_line_1) ??
+      asString(container.line_1) ??
+      asString(container.location?.address_line_1) ??
+      asString(container.location?.line_1),
+    city:
+      asString(container.town) ??
+      asString(container.city) ??
+      asString(container.location?.town) ??
+      asString(container.location?.city),
     postcode: asString(container.location?.postcode) ?? asString(container.postcode),
     latitude,
     longitude,

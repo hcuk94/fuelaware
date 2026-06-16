@@ -68,4 +68,20 @@ describe("searchStations", () => {
       })
     );
   });
+
+  it("adds a spaced UK postcode variant for compact searches", async () => {
+    prismaMock.station.findMany.mockResolvedValue([]);
+
+    await searchStations({ q: "nw101de" });
+
+    expect(prismaMock.station.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({ postcode: { contains: "NW10 1DE" } })
+          ])
+        })
+      })
+    );
+  });
 });
