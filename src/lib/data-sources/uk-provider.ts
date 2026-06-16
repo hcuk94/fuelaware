@@ -60,7 +60,14 @@ type UkApiRecord = {
 
 function categoryFromCode(code: string): FuelCategory {
   const normalizedCode = code.toLowerCase();
-  if (normalizedCode.includes("diesel") || normalizedCode === "b7") {
+  if (
+    normalizedCode.includes("diesel") ||
+    normalizedCode === "b7" ||
+    normalizedCode.startsWith("b7_") ||
+    normalizedCode === "b10" ||
+    normalizedCode.startsWith("b10") ||
+    normalizedCode === "hvo"
+  ) {
     return FuelCategory.DIESEL;
   }
   if (normalizedCode.includes("electric") || normalizedCode.includes("ev")) {
