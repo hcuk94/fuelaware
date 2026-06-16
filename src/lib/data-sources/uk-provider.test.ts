@@ -397,4 +397,81 @@ describe("UkFuelProvider", () => {
       ])
     );
   });
+
+  it("maps current government diesel identifiers to diesel categories", async () => {
+    process.env = {
+      ...originalEnv,
+      UK_FUEL_API_URL: "https://www.fuel-finder.service.gov.uk/api/v1/",
+      UK_FUEL_CLIENT_ID: "demo-client",
+      UK_FUEL_CLIENT_SECRET: "demo-secret",
+      UK_FUEL_TOKEN_URL: "https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token"
+    };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            access_token: "access-token",
+            expires_in: 3600
+          }
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              node_id: "demo-diesel-codes",
+              trading_name: "Demo Diesel Codes",
+              city: "Leeds",
+              location: {
+                postcode: "LS1 1AA",
+                latitude: 53.8,
+                longitude: -1.54
+              }
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              node_id: "demo-diesel-codes",
+              fuel_prices: [
+                {
+                  fuel_type: "B7_STANDARD",
+                  price: 159.9,
+                  price_last_updated: "2026-06-16T00:00:00Z"
+                },
+                {
+                  fuel_type: "B7_PREMIUM",
+                  price: 189.9,
+                  price_last_updated: "2026-06-16T00:00:00Z"
+                },
+                {
+                  fuel_type: "HVO",
+                  price: 169.9,
+                  price_last_updated: "2026-06-16T00:00:00Z"
+                }
+              ]
+            }
+          ]
+        })
+      }) as typeof fetch;
+
+    const provider = new UkFuelProvider();
+    const stations = await provider.fetchStations();
+
+    expect(stations).toHaveLength(1);
+    expect(stations[0].products).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ productCode: "B7_STANDARD", category: FuelCategory.DIESEL, price: 1.599 }),
+        expect.objectContaining({ productCode: "B7_PREMIUM", category: FuelCategory.DIESEL, price: 1.899 }),
+        expect.objectContaining({ productCode: "HVO", category: FuelCategory.DIESEL, price: 1.699 })
+      ])
+    );
+  });
 });
