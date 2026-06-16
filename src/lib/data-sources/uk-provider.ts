@@ -1,6 +1,7 @@
 import { mockStations } from "./mock-data";
 import { FuelCategory, SiteType, type FuelDataSource, type NormalizedStation } from "./types";
 import { fetchWithEnvProxy } from "@/lib/fetch-with-env-proxy";
+import { buildDisplayStationName } from "@/lib/utils/station-name";
 
 type UkApiRecord = {
   id?: string;
@@ -243,6 +244,13 @@ function buildStationSeed(record: UkApiRecord) {
     return undefined;
   }
 
+  const rawName =
+    asString(container.trading_name) ??
+    asString(container.site_name) ??
+    asString(container.forecourt_name) ??
+    asString(container.name);
+  const brand = asString(container.brand_name) ?? asString(container.brand);
+
   const latitude =
     asNumber(container.location?.latitude) ??
     asNumber(container.lat) ??
@@ -263,13 +271,7 @@ function buildStationSeed(record: UkApiRecord) {
   const station: NormalizedStation = {
     sourceKey: "uk-gov",
     externalId: getStationIdentity(record),
-    name:
-      asString(container.trading_name) ??
-      asString(container.site_name) ??
-      asString(container.forecourt_name) ??
-      asString(container.name) ??
-      asString(container.brand_name) ??
-      "Unnamed UK station",
+    name: rawName ? buildDisplayStationName(rawName, brand) : brand ?? "Unnamed UK station",
     type: SiteType.STATION,
     countryCode: "GB",
     addressLine1:
@@ -278,7 +280,7 @@ function buildStationSeed(record: UkApiRecord) {
     postcode: asString(container.location?.postcode) ?? asString(container.postcode),
     latitude,
     longitude,
-    brand: asString(container.brand_name) ?? asString(container.brand),
+    brand,
     operatorName: asString(container.operator),
     products: []
   };

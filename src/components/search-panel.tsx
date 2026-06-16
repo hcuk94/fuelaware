@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatPrice } from "@/lib/utils/format";
+import { buildDisplayStationName } from "@/lib/utils/station-name";
 
 type SearchResult = {
   id: string;
   name: string;
+  brand: string | null;
   city: string | null;
   countryCode: string;
   addressLine1: string | null;
@@ -94,7 +96,7 @@ export function SearchPanel({ signedIn }: { signedIn: boolean }) {
           <article key={station.id} className="result-card">
             <div className="result-header">
               <div>
-                <h3>{station.name}</h3>
+                <h3>{buildDisplayStationName(station.name, station.brand)}</h3>
                 <p>
                   {station.addressLine1 ? `${station.addressLine1}, ` : ""}
                   {station.city ?? station.countryCode}
