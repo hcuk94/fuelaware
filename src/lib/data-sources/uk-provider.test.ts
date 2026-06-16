@@ -187,6 +187,76 @@ describe("UkFuelProvider", () => {
     );
   });
 
+  it("reads city and address from the nested location payload", async () => {
+    process.env = {
+      ...originalEnv,
+      UK_FUEL_API_URL: "https://www.fuel-finder.service.gov.uk/api/v1/",
+      UK_FUEL_CLIENT_ID: "demo-client",
+      UK_FUEL_CLIENT_SECRET: "demo-secret",
+      UK_FUEL_TOKEN_URL: "https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token",
+      UK_FUEL_API_SCOPE: "fuelfinder.read.location-fields-test"
+    };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            access_token: "access-token",
+            expires_in: 3600
+          }
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              node_id: "demo-location-1",
+              trading_name: "Nested Location Court",
+              brand_name: "DemoFuel",
+              location: {
+                address_line_1: "14 London Road",
+                city: "Loughborough",
+                postcode: "LE11 9AA",
+                latitude: 52.77,
+                longitude: -1.21
+              }
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              node_id: "demo-location-1",
+              fuel_prices: [
+                {
+                  fuel_type: "e10",
+                  price: 151.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                }
+              ]
+            }
+          ]
+        })
+      }) as typeof fetch;
+
+    const provider = new UkFuelProvider();
+    const stations = await provider.fetchStations();
+
+    expect(stations).toHaveLength(1);
+    expect(stations[0]).toMatchObject({
+      externalId: "demo-location-1",
+      name: "Nested Location Court",
+      addressLine1: "14 London Road",
+      city: "Loughborough",
+      postcode: "LE11 9AA"
+    });
+  });
+
   it("combines brand with generic station names", async () => {
     process.env = {
       ...originalEnv,

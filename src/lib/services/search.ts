@@ -34,21 +34,35 @@ type SearchResult = SearchStation & {
   distanceKm: number | null;
 };
 
+function buildUkPostcodeVariants(query: string) {
+  const compact = query.replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z0-9]{5,7}$/.test(compact) || compact.length <= 3) {
+    return [];
+  }
+
+  const spaced = `${compact.slice(0, -3)} ${compact.slice(-3)}`;
+  return Array.from(new Set([query, compact, spaced]));
+}
+
 export async function searchStations(options: SearchOptions) {
   const limit = options.limit ?? 20;
   const settings = await getSettings();
+  const query = options.q?.trim();
+  const postcodeVariants = query ? buildUkPostcodeVariants(query) : [];
   const where = {
     sourceKey: {
       in: settings.enabledProviderKeys
     },
-    ...(options.q
+    ...(query
       ? {
           OR: [
-            { name: { contains: options.q } },
-            { city: { contains: options.q } },
-            { postcode: { contains: options.q } },
-            { addressLine1: { contains: options.q } },
-            { brand: { contains: options.q } }
+            { name: { contains: query } },
+            { city: { contains: query } },
+            ...postcodeVariants.map((postcode) => ({
+              postcode: { contains: postcode }
+            })),
+            { addressLine1: { contains: query } },
+            { brand: { contains: query } }
           ]
         }
       : {})
