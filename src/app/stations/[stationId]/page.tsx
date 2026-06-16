@@ -3,6 +3,7 @@ import { PriceChart } from "@/components/price-chart";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/services/settings";
 import { normalizeSnapshotSeries } from "@/lib/utils/snapshots";
+import { buildDisplayStationName } from "@/lib/utils/station-name";
 import { formatDate, formatPrice } from "@/lib/utils/format";
 
 type StationSnapshot = {
@@ -23,6 +24,7 @@ type StationProduct = {
 type StationRecord = {
   countryCode: string;
   name: string;
+  brand: string | null;
   addressLine1: string | null;
   city: string | null;
   postcode: string | null;
@@ -63,7 +65,7 @@ export default async function StationPage({ params }: { params: Promise<{ statio
       <section className="hero">
         <div className="hero-copy stack">
           <span className="eyebrow">{typedStation.countryCode}</span>
-          <h1>{typedStation.name}</h1>
+          <h1>{buildDisplayStationName(typedStation.name, typedStation.brand)}</h1>
           <p>
             {typedStation.addressLine1 ? `${typedStation.addressLine1}, ` : ""}
             {typedStation.city ?? ""} {typedStation.postcode ?? ""}

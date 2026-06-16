@@ -187,6 +187,74 @@ describe("UkFuelProvider", () => {
     );
   });
 
+  it("combines brand with generic station names", async () => {
+    process.env = {
+      ...originalEnv,
+      UK_FUEL_API_URL: "https://www.fuel-finder.service.gov.uk/api/v1/",
+      UK_FUEL_CLIENT_ID: "demo-client",
+      UK_FUEL_CLIENT_SECRET: "demo-secret",
+      UK_FUEL_TOKEN_URL: "https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token",
+      UK_FUEL_API_SCOPE: "fuelfinder.read.generic-name-test"
+    };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            access_token: "access-token",
+            expires_in: 3600
+          }
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              node_id: "demo-2",
+              trading_name: "Bromley Filling Station",
+              brand_name: "Harvest Energy",
+              city: "Bromley",
+              location: {
+                postcode: "BR1 1AA",
+                latitude: 51.4,
+                longitude: 0.02
+              }
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              node_id: "demo-2",
+              fuel_prices: [
+                {
+                  fuel_type: "e10",
+                  price: 149.0,
+                  price_last_updated: "2026-03-20T10:00:00Z"
+                }
+              ]
+            }
+          ]
+        })
+      }) as typeof fetch;
+
+    const provider = new UkFuelProvider();
+    const stations = await provider.fetchStations();
+
+    expect(stations).toHaveLength(1);
+    expect(stations[0]).toMatchObject({
+      externalId: "demo-2",
+      name: "Harvest Energy Bromley",
+      brand: "Harvest Energy",
+      city: "Bromley"
+    });
+  });
+
   it("groups row-based government API records by forecourt", async () => {
     process.env = { ...originalEnv, UK_FUEL_API_URL: "https://example.test/uk" };
     global.fetch = vi
