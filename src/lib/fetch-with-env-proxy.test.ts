@@ -10,7 +10,7 @@ describe("fetchWithEnvProxy", () => {
     vi.restoreAllMocks();
   });
 
-  it("adds a dispatcher when HTTP_PROXY is configured", async () => {
+  it("leaves HTTP_PROXY handling to Node's native fetch", async () => {
     process.env = {
       ...originalEnv,
       HTTP_PROXY: "http://proxy.example:8080",
@@ -21,15 +21,10 @@ describe("fetchWithEnvProxy", () => {
 
     await fetchWithEnvProxy("http://example.test/feed");
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "http://example.test/feed",
-      expect.objectContaining({
-        dispatcher: expect.anything()
-      })
-    );
+    expect(global.fetch).toHaveBeenCalledWith("http://example.test/feed", {});
   });
 
-  it("adds a dispatcher when HTTPS_PROXY is configured", async () => {
+  it("preserves Next fetch options when HTTPS_PROXY is configured", async () => {
     process.env = {
       ...originalEnv,
       HTTP_PROXY: "",
@@ -42,10 +37,7 @@ describe("fetchWithEnvProxy", () => {
 
     expect(global.fetch).toHaveBeenCalledWith(
       "https://example.test/feed",
-      expect.objectContaining({
-        next: { revalidate: 0 },
-        dispatcher: expect.anything()
-      })
+      { next: { revalidate: 0 } }
     );
   });
 
@@ -68,33 +60,21 @@ describe("fetchWithEnvProxy", () => {
     });
   });
 
-  it("retries without a proxy dispatcher when HTTP tunneling fails", async () => {
+  it("does not add retry logic around native fetch failures", async () => {
     process.env = {
       ...originalEnv,
       HTTP_PROXY: "http://proxy.example:8080",
       HTTPS_PROXY: "",
       NO_PROXY: ""
     };
-    global.fetch = vi
-      .fn()
-      .mockRejectedValueOnce(
-        new TypeError("fetch failed", {
-          cause: new Error("Proxy response (500) !== 200 when HTTP Tunneling")
-        })
-      )
-      .mockResolvedValueOnce({ ok: true }) as typeof fetch;
+    global.fetch = vi.fn().mockRejectedValue(new TypeError("fetch failed")) as typeof fetch;
 
-    await fetchWithEnvProxy("https://example.test/feed", { next: { revalidate: 0 } });
-
-    expect(global.fetch).toHaveBeenNthCalledWith(
-      1,
-      "https://example.test/feed",
-      expect.objectContaining({
-        next: { revalidate: 0 },
-        dispatcher: expect.anything()
-      })
+    await expect(fetchWithEnvProxy("https://example.test/feed", { next: { revalidate: 0 } })).rejects.toThrow(
+      "fetch failed"
     );
-    expect(global.fetch).toHaveBeenNthCalledWith(2, "https://example.test/feed", {
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith("https://example.test/feed", {
       next: { revalidate: 0 }
     });
   });

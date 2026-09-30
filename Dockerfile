@@ -15,6 +15,7 @@ RUN NEXTAUTH_SECRET=build-time-placeholder DATABASE_URL=file:./prisma/dev.db npm
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_USE_ENV_PROXY=1
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
