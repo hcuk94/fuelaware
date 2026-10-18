@@ -130,6 +130,23 @@ const migrations = [
         ON "PriceSnapshot"("fuelProductId", "observedAt");
       `);
     }
+  },
+  {
+    id: "0004_shared_sync_lease",
+    up(db) {
+      if (!tableExists(db, "AppSettings")) {
+        applyInitialSchema(db);
+        return;
+      }
+
+      if (!columnExists(db, "AppSettings", "syncLeaseOwner")) {
+        db.exec('ALTER TABLE "AppSettings" ADD COLUMN "syncLeaseOwner" TEXT');
+      }
+
+      if (!columnExists(db, "AppSettings", "syncLeaseExpiresAt")) {
+        db.exec('ALTER TABLE "AppSettings" ADD COLUMN "syncLeaseExpiresAt" DATETIME');
+      }
+    }
   }
 ];
 

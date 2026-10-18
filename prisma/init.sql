@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS "AppSettings" (
   "manualSyncSummary" TEXT,
   "manualSyncStartedAt" DATETIME,
   "manualSyncFinishedAt" DATETIME,
+  "syncLeaseOwner" TEXT,
+  "syncLeaseExpiresAt" DATETIME,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" DATETIME NOT NULL
 );
