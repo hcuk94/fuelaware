@@ -189,7 +189,7 @@ export async function startManualSync() {
     return currentState;
   }
 
-  const started = runExclusiveSync("manual", runManualSync);
+  const started = await runExclusiveSync("manual", runManualSync);
   if (!started) {
     const owner = getActiveSyncOwner();
     const message =

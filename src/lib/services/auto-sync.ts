@@ -150,7 +150,7 @@ async function tickAutomaticSync() {
     return;
   }
 
-  const started = runExclusiveSync("automatic", async () => {
+  const started = await runExclusiveSync("automatic", async () => {
     await runAutomaticSyncForProviders(dueProviderKeys, configByKey);
   });
 
