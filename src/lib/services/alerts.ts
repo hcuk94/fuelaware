@@ -3,6 +3,8 @@ import nodemailer from "nodemailer";
 import { formatPrice } from "@/lib/utils/format";
 
 type AlertSnapshot = {
+  id: string;
+  createdAt: Date;
   observedAt: Date;
   price: unknown;
 };
@@ -20,6 +22,8 @@ type ProductAlert = {
   isEnabled: boolean;
   thresholdPrice: unknown;
   lowestLookbackDays: number | null;
+  lastTriggeredAt: Date | null;
+  lastTriggeredEventKey: string | null;
   favourite: AlertFavourite;
 };
 
@@ -138,6 +142,23 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
 
     if (!shouldTrigger) continue;
 
+    const eventKey = `${latestSnapshot.id}:${currentPrice}`;
+    if (alert.lastTriggeredEventKey === eventKey) continue;
+
+    // Older rules only recorded the send time. If that send happened after the
+    // current snapshot was created, treat this as a replay of the same event.
+    if (
+      !alert.lastTriggeredEventKey &&
+      alert.lastTriggeredAt &&
+      alert.lastTriggeredAt >= latestSnapshot.createdAt
+    ) {
+      await prisma.alertRule.update({
+        where: { id: alert.id },
+        data: { lastTriggeredEventKey: eventKey }
+      });
+      continue;
+    }
+
     await sendAlertEmail(
       email,
       `FuelAware alert for ${typedProduct.station.name}`,
@@ -146,7 +167,10 @@ export async function evaluateAlertsForProduct(prisma: PrismaClient, fuelProduct
 
     await prisma.alertRule.update({
       where: { id: alert.id },
-      data: { lastTriggeredAt: new Date() }
+      data: {
+        lastTriggeredAt: new Date(),
+        lastTriggeredEventKey: eventKey
+      }
     });
   }
 }

@@ -147,6 +147,19 @@ const migrations = [
         db.exec('ALTER TABLE "AppSettings" ADD COLUMN "syncLeaseExpiresAt" DATETIME');
       }
     }
+  },
+  {
+    id: "0005_alert_event_dedupe",
+    up(db) {
+      if (!tableExists(db, "AlertRule")) {
+        applyInitialSchema(db);
+        return;
+      }
+
+      if (!columnExists(db, "AlertRule", "lastTriggeredEventKey")) {
+        db.exec('ALTER TABLE "AlertRule" ADD COLUMN "lastTriggeredEventKey" TEXT');
+      }
+    }
   }
 ];
 

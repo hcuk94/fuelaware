@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS "AlertRule" (
   "lowestLookbackDays" INTEGER,
   "isEnabled" BOOLEAN NOT NULL DEFAULT true,
   "lastTriggeredAt" DATETIME,
+  "lastTriggeredEventKey" TEXT,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" DATETIME NOT NULL,
   CONSTRAINT "AlertRule_favouriteId_fkey" FOREIGN KEY ("favouriteId") REFERENCES "Favourite" ("id") ON DELETE CASCADE ON UPDATE CASCADE,

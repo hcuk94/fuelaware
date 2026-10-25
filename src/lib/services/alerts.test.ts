@@ -35,8 +35,18 @@ describe("evaluateAlertsForProduct", () => {
       lastPrice: 1.45,
       station: { name: "Demo Station", addressLine1: "1 Demo Street", city: "London" },
       snapshots: [
-        { price: 1.45, observedAt: new Date("2026-03-11T10:00:00Z") },
-        { price: 1.52, observedAt: new Date("2026-03-10T10:00:00Z") }
+        {
+          id: "snapshot-1",
+          price: 1.45,
+          createdAt: new Date("2026-03-11T10:00:00Z"),
+          observedAt: new Date("2026-03-11T10:00:00Z")
+        },
+        {
+          id: "snapshot-2",
+          price: 1.52,
+          createdAt: new Date("2026-03-10T10:00:00Z"),
+          observedAt: new Date("2026-03-10T10:00:00Z")
+        }
       ],
       alerts: [
         {
@@ -55,7 +65,10 @@ describe("evaluateAlertsForProduct", () => {
     expect(sendMail).toHaveBeenCalledOnce();
     expect(prisma.alertRule.update).toHaveBeenCalledWith({
       where: { id: "alert-1" },
-      data: { lastTriggeredAt: expect.any(Date) }
+      data: {
+        lastTriggeredAt: expect.any(Date),
+        lastTriggeredEventKey: "snapshot-1:1.45"
+      }
     });
   });
 
